@@ -24,6 +24,6 @@ REM start "" "%WEB_URL%"
 REM 元のディレクトリに戻る (オプション)
 popd
 
-echo.
-echo Git Bashでの処理が完了しました。
-pause
+REM echo.
+REM echo Git Bashでの処理が完了しました。
+REM pause

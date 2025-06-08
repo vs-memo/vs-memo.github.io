@@ -1,3 +1,20 @@
 @use "./base.scss";
 
 // put your custom CSS here!
+
+// Google Calendar埋め込みのレスポンシブ対応
+.google-calendar-container iframe {
+  /* ライトモード時の背景色を明示 (もしiframeが透過しない場合) */
+  background-color: white; 
+}
+// ダークモード時のスタイルを適用
+// Quartzのテーマ切り替えに合わせて、data-theme="dark" が body 要素などに適用される
+body[data-theme="dark"] {
+  .google-calendar-container iframe {
+    filter: invert(0.9) hue-rotate(180deg); // 色を反転させて色相調整
+    background-color: #333; /* 反転後に背景が不自然にならないように調整 */
+  }
+}
+
+/* その他のカスタムスタイル */
+// a { color: hotpink; }
