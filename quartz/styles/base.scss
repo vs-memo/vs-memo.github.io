@@ -166,6 +166,7 @@ a {
   margin: 0 auto;
   & article {
     & > h1 {
+      display: none;
       font-size: 2rem;
     }
 
