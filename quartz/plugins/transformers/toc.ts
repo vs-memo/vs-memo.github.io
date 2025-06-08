@@ -5,7 +5,7 @@ import { toString } from "mdast-util-to-string"
 import Slugger from "github-slugger"
 
 export interface Options {
-  maxDepth: 2 | 3 | 4 | 5 | 6
+  maxDepth: 1 | 2 | 3 | 4 | 5 | 6
   minEntries: number
   showByDefault: boolean
   collapseByDefault: boolean

@@ -69,7 +69,11 @@ const config: QuartzConfig = {
       }),
       Plugin.ObsidianFlavoredMarkdown({ enableInHtmlEmbed: false }),
       Plugin.GitHubFlavoredMarkdown(),
-      Plugin.TableOfContents({ collapseByDefault: true }),
+      Plugin.TableOfContents({
+          maxDepth: 2, // h2以下のみを目次に含める  
+          minEntries: 1,  
+          showByDefault: true,  
+        collapseByDefault: true }),
       Plugin.CrawlLinks({ markdownLinkResolution: "shortest" }),
       Plugin.Description(),
       Plugin.Latex({ renderEngine: "katex" }),
