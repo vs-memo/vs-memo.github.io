@@ -1,0 +1,15 @@
+---
+title: 対戦会スケジュール
+aliases:
+  - 対戦会スケジュール
+linter-yaml-title-alias: 対戦会スケジュール
+tags: []
+created: 2025-06-09
+modified: 2025-06-09
+---
+
+# 対戦会スケジュール
+
+<iframe src="https://calendar.google.com/calendar/embed?height=600&wkst=1&ctz=UTC&showPrint=0&showTz=0&showNav=0&mode=AGENDA&showCalendars=0&showDate=0&showTitle=0&src=YTA5ZnU3bDUyYmplMjJ1M2Y4MnBrYmN1MnNAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ&color=%239e69af" style="border:solid 1px #777" width="800" height="600" frameborder="0" scrolling="no"></iframe>
+
+[VampireSaviorカレンダー](https://calendar.google.com/calendar/u/0/embed?src=a09fu7l52bje22u3f82pkbcu2s@group.calendar.google.com&ctz=Asia/Tokyo%22+style%3D%22border:+0%22+width%3D%22800%22+height%3D%22600%22+frameborder%3D%220%22+scrolling%3D%22no%22)

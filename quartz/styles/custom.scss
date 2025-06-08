@@ -2,10 +2,50 @@
 
 // put your custom CSS here!
 
-// .markdown-body は記事本文のコンテンツを囲むクラス
-.markdown-body {
-  // 記事本文内の最初のH1要素を非表示にする
-  h1 {
-    display: none;
+.recent-notes {
+  //& > h3 {
+  //  margin: 0.5rem 0 0 0;
+  //  font-size: 1rem;
+  //}
+
+  & > ul.recent-ul {
+    list-style: none;
+    margin: 0;
+    margin-top: 0;
+    padding-left: 0;
+
+    & > li {
+      margin: 1rem 0;
+      .section > .desc > h3 {
+        font-size: 0.8rem;
+        margin-top: -1rem;
+        margin-bottom: -1rem;
+        background-color: transparent;
+      }
+
+      .section > .meta {
+        font-size: 0.8rem;
+        margin: 0 0 0.5rem 0;
+        opacity: 0.6;
+      }
+
+    }
   }
+  ul.tags {  
+  display: none; // タグを非表示  
+  }
+}
+
+.recent-notes {  
+  .recent-ul {  
+    max-height: 15vh; // 最大高さを設定  
+    overflow-y: auto; // 縦スクロールを有効化  
+    overflow-x: hidden; // 横スクロールは無効  
+  }  
+}
+
+.sidebar.left {  
+  .recent-notes {  
+    margin-top: auto; // RecentNotesを下に押し下げる  
+  }  
 }

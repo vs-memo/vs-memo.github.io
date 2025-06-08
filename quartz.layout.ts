@@ -10,7 +10,8 @@ export const sharedPageComponents: SharedLayout = {
     links: {
       // GitHub: "https://github.com/jackyzha0/quartz",
       // "Discord Community": "https://discord.gg/cRFFHYye7t",
-      Xアカウント: "https://x.com/moropickles"
+      "Xｱｶｳﾝﾄ": "https://x.com/moropickles",
+      "旧tumblr": "https://headride.tumblr.com"
     },
   }),
 }
@@ -40,11 +41,15 @@ export const defaultContentPageLayout: PageLayout = {
       ],
     }),
     Component.Explorer(),
+    Component.RecentNotes({
+      title: "更新リスト" , limit: 10, showTags: false 
+    }),
   ],
   right: [
     Component.Graph(),
     Component.DesktopOnly(Component.TableOfContents()),
     Component.Backlinks(),
+    Component.TagList(), // タグリストを追加  
   ],
 }
 
