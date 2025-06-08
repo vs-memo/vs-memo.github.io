@@ -23,6 +23,7 @@ const config: QuartzConfig = {
       fontOrigin: "googleFonts",
       cdnCaching: true,
       typography: {
+        title: "Merriweather",
         header: "Noto Sans JP",
         body: "Noto Sans JP",
         code: "IBM Plex Mono",

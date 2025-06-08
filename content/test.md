@@ -1,5 +1,5 @@
 ---
-title: テスト
+title: test
 aliases: [テスト]
 linter-yaml-title-alias: テスト
 tags: []
