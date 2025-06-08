@@ -1,3 +1,11 @@
 @use "./base.scss";
 
 // put your custom CSS here!
+
+// .markdown-body は記事本文のコンテンツを囲むクラス
+.markdown-body {
+  // 記事本文内の最初のH1要素を非表示にする
+  h1:first-child {
+    display: none;
+  }
+}
