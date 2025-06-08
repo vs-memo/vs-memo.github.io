@@ -9,13 +9,13 @@ import * as Plugin from "./quartz/plugins"
 const config: QuartzConfig = {
   configuration: {
     pageTitle: "vs-memo",
-    pageTitleSuffix: "",
+    pageTitleSuffix: "markdown notes of vampire savior strategy",
     enableSPA: true,
     enablePopovers: true,
     analytics: {
       provider: "plausible",
     },
-    locale: "en-US",
+    locale: "ja-JP",
     baseUrl: "quartz.jzhao.xyz",
     ignorePatterns: ["private", "templates", ".obsidian"],
     defaultDateType: "modified",
@@ -23,8 +23,8 @@ const config: QuartzConfig = {
       fontOrigin: "googleFonts",
       cdnCaching: true,
       typography: {
-        header: "Schibsted Grotesk",
-        body: "Source Sans Pro",
+        header: "Roboto, Noto Sans JP",
+        body: "Roboto, Noto Sans JP",
         code: "IBM Plex Mono",
       },
       colors: {
