@@ -2,16 +2,38 @@
 
 // put your custom CSS here!
 
-// Google Calendar埋め込みのレスポンシブ対応
-.google-calendar-container iframe {
-  /* ライトモード時の背景色を明示 (もしiframeが透過しない場合) */
-  background-color: white; 
+/*
+ * Google Calendar埋め込みのレスポンシブ対応とライトモード時の基本スタイル
+ * (この部分は変更なし)
+ */
+.google-calendar-container {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 のアスペクト比 */
+  height: 0;
+  overflow: hidden;
+  max-width: 100%;
+  border-radius: 8px; /* 角丸にする */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 影をつける */
+  margin-bottom: 20px; /* 下に少し余白 */
 }
-// ダークモード時のスタイルを適用
-// Quartzのテーマ切り替えに合わせて、data-theme="dark" が body 要素などに適用される
-body[data-theme="dark"] {
+
+.google-calendar-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background-color: white; /* ライトモード時の背景色を明示 */
+}
+
+/*
+ * ダークモード時のスタイルを適用
+ * root[saved-theme=dark] セレクタを使用
+ */
+:root[saved-theme=dark] { /* ここを変更 */
   .google-calendar-container iframe {
-    filter: invert(0.9) hue-rotate(180deg); // 色を反転させて色相調整
+    filter: invert(0.9) hue-rotate(180deg); /* 色を反転させて色相調整 */
     background-color: #333; /* 反転後に背景が不自然にならないように調整 */
   }
 }
