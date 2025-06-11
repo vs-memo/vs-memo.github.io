@@ -37,13 +37,13 @@ export const defaultContentPageLayout: PageLayout = {
           grow: true,
         },
         { Component: Component.Darkmode() },
-        //{ Component: Component.ReaderMode() },
+        { Component: Component.MobileOnly(Component.ReaderMode()) },
       ],
     }),
     Component.Explorer(),
-    Component.RecentNotes({
+    Component.DesktopOnly(Component.RecentNotes({
       title: "更新リスト" , limit: 10, showTags: false 
-    }),
+    })),
   ],
   right: [
     Component.Graph(),
