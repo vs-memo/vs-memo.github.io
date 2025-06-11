@@ -14,16 +14,6 @@ async function mouseEnterHandler(
     return
   }
 
-  // footnoteリンクの場合はポップアップを無効化  
-  if (link.hasAttribute('data-footnote-ref') ||   
-      link.href.includes('#user-content-fn')) {  
-    return  
-  }  
-  
-  // 以下、既存のポップアップ処理...
-
-
-
   async function setPosition(popoverElement: HTMLElement) {
     const { x, y } = await computePosition(link, popoverElement, {
       strategy: "fixed",

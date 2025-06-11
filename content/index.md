@@ -5,14 +5,15 @@ aliases:
 linter-yaml-title-alias: 目次
 tags: []
 created: 2025-06-08
-modified: 2025-06-11
+modified: 2025-06-12
 ---
 
 # 目次
-[[対戦会スケジュール]]
+## [[対戦会スケジュール]]
 
 ## システム
-## [[判定]]
+
+[[判定]]
 
 ## 一覧表
 
