@@ -1,8 +1,11 @@
 ---
 title: フェリシア vs ガロン
+aliases:
+  - フェリシア vs ガロン
+linter-yaml-title-alias: フェリシア vs ガロン
 tags: []
 created: 2025-06-11
-modified: 2025-06-15
+modified: 2025-06-16
 ---
 
 # フェリシア vs ガロン

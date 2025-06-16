@@ -1,16 +1,15 @@
 ---
-title: クリップ/レイレイ
+title: クリップ＞レイレイ
 aliases:
-  - クリップ/レイレイ
-linter-yaml-title-alias: クリップ/レイレイ
+  - クリップ＞レイレイ
+linter-yaml-title-alias: クリップ＞レイレイ
 tags:
-  - LE
   - 動画
 created: 2025-06-14
 modified: 2025-06-16
 ---
 
-# クリップ/[[レイレイ]]
+# クリップ＞[[レイレイ]]
 
 ## 旋風舞戻りの空中ガード確認切り離し前ダッシュ被せ
 

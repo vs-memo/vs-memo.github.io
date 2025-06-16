@@ -1,19 +1,22 @@
 ---
-title: フェリシア vs キュービー
+title: フェリシア vs ザベル
+aliases:
+  - フェリシア vs ザベル
+linter-yaml-title-alias: フェリシア vs ザベル
 tags: []
 created: 2025-06-11
-modified: 2025-06-13
+modified: 2025-06-16
 ---
 
-# フェリシア vs キュービー
+# フェリシア vs ザベル
 
 %%3 行対策%%
 
-## vs キュービー
+## vs ザベル
 
-投げ
-DF
-屈中 K の精度
+対空の使い分け
+起き上がり方向
+飛びがかみ合ったら最大
 
 ## 概要
 

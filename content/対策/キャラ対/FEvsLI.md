@@ -1,8 +1,11 @@
 ---
 title: フェリシア vs リリス
+aliases:
+  - フェリシア vs リリス
+linter-yaml-title-alias: フェリシア vs リリス
 tags: []
 created: 2025-06-11
-modified: 2025-06-13
+modified: 2025-06-16
 ---
 
 # フェリシア vs リリス

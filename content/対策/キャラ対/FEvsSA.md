@@ -1,8 +1,11 @@
 ---
 title: フェリシア vs サスカッチ
+aliases:
+  - フェリシア vs サスカッチ
+linter-yaml-title-alias: フェリシア vs サスカッチ
 tags: []
 created: 2025-06-11
-modified: 2025-06-15
+modified: 2025-06-16
 ---
 
 # フェリシア vs サスカッチ

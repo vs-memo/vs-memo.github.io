@@ -5,7 +5,7 @@ aliases:
 linter-yaml-title-alias: 目次
 tags: []
 created: 2025-06-08
-modified: 2025-06-13
+modified: 2025-06-17
 ---
 
 # 目次
@@ -17,6 +17,8 @@ modified: 2025-06-13
 [[判定]]
 
 ## 一覧表
+
+[[コマンド投げ一覧|コマンド投げ]]
 
 ## キャラクター
 

@@ -1,15 +1,15 @@
 ---
-title: クリップ/リリス
+title: クリップ＞リリス
 aliases:
-  - クリップ/リリス
-linter-yaml-title-alias: クリップ/リリス
+  - クリップ＞リリス
+linter-yaml-title-alias: クリップ＞リリス
 tags:
   - "動画"
 created: 2025-06-14
 modified: 2025-06-16
 ---
 
-# クリップ/[[リリス]]
+# クリップ＞[[リリス]]
 
 ## D 中 P で屈中 P 潰してチェーンルミナス
 

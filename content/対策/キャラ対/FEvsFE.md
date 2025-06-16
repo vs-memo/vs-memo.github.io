@@ -1,15 +1,18 @@
 ---
-title: フェリシア vs ザベル
+title: フェリシア vs フェリシア
+aliases:
+  - フェリシア vs フェリシア
+linter-yaml-title-alias: フェリシア vs フェリシア
 tags: []
 created: 2025-06-11
-modified: 2025-06-15
+modified: 2025-06-16
 ---
 
-# フェリシア vs ザベル
+# フェリシア vs フェリシア
 
 %%3 行対策%%
 
-## vs ザベル
+## vs B
 
 対空の使い分け
 起き上がり方向

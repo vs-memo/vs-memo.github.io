@@ -1,8 +1,11 @@
 ---
 title: フェリシア vs ビクトル
+aliases:
+  - フェリシア vs ビクトル
+linter-yaml-title-alias: フェリシア vs ビクトル
 tags: []
 created: 2025-06-11
-modified: 2025-06-15
+modified: 2025-06-16
 ---
 
 # フェリシア vs ビクトル

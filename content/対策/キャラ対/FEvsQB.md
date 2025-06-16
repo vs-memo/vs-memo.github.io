@@ -1,19 +1,22 @@
 ---
-title: フェリシア vs バレッタ
+title: フェリシア vs キュービー
+aliases:
+  - フェリシア vs キュービー
+linter-yaml-title-alias: フェリシア vs キュービー
 tags: []
 created: 2025-06-11
-modified: 2025-06-13
+modified: 2025-06-16
 ---
 
-# フェリシア vs バレッタ
+# フェリシア vs キュービー
 
 %%3 行対策%%
 
-## vs バレッタ
+## vs キュービー
 
-空中投げ
-不能回避の移動起き
-中段への反撃
+投げ
+DF
+屈中 K の精度
 
 ## 概要
 

@@ -1,8 +1,11 @@
 ---
 title: フェリシア vs ジェダ
+aliases:
+  - フェリシア vs ジェダ
+linter-yaml-title-alias: フェリシア vs ジェダ
 tags: []
 created: 2025-06-11
-modified: 2025-06-13
+modified: 2025-06-16
 ---
 
 # フェリシア vs ジェダ

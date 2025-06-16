@@ -1,11 +1,14 @@
 ---
-title: フェリシア vs フェリシア
+title: フェリシア vs ビシャモン
+aliases:
+  - フェリシア vs ビシャモン
+linter-yaml-title-alias: フェリシア vs ビシャモン
 tags: []
 created: 2025-06-11
-modified: 2025-06-15
+modified: 2025-06-16
 ---
 
-# フェリシア vs フェリシア
+# フェリシア vs ビシャモン
 
 %%3 行対策%%
 

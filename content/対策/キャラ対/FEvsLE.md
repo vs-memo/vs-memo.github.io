@@ -1,8 +1,11 @@
 ---
 title: フェリシア vs レイレイ
+aliases:
+  - フェリシア vs レイレイ
+linter-yaml-title-alias: フェリシア vs レイレイ
 tags: []
 created: 2025-06-11
-modified: 2025-06-15
+modified: 2025-06-17
 ---
 
 # フェリシア vs レイレイ
@@ -36,3 +39,6 @@ modified: 2025-06-15
 ## 確定反撃
 
 ## 反撃確定
+
+レイレイ：小技 2 発ガードさせて前ジャンプ小 P
+※しゃがまれるとスカる

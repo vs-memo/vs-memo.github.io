@@ -1,15 +1,15 @@
 ---
-title: クリップ/モリガン
+title: クリップ＞モリガン
 aliases:
-  - クリップ/モリガン
-linter-yaml-title-alias: クリップ/モリガン
+  - クリップ＞モリガン
+linter-yaml-title-alias: クリップ＞モリガン
 tags:
   - "動画"
 created: 2025-06-14
 modified: 2025-06-16
 ---
 
-# クリップ/[[モリガン]]
+# クリップ＞[[モリガン]]
 
 ## DFGCES シャドウ結構減る
 
