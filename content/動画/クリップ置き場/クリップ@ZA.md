@@ -1,15 +1,15 @@
 ---
-title: ザベル _ クリップ
+title: クリップ/ザベル
 aliases:
-  - ザベル _ クリップ
-linter-yaml-title-alias: ザベル _ クリップ
+  - クリップ/ザベル
+linter-yaml-title-alias: クリップ/ザベル
 tags:
   - "動画"
 created: 2025-06-14
-modified: 2025-06-14
+modified: 2025-06-16
 ---
 
-# ザベル _ クリップ
+# クリップ/[[ザベル]]
 
 ## J 小 P のガードポイント
 
