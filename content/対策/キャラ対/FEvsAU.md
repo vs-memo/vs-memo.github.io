@@ -5,7 +5,7 @@ aliases:
 linter-yaml-title-alias: フェリシア vs オルバス
 tags: []
 created: 2025-06-11
-modified: 2025-06-17
+modified: 2025-06-26
 ---
 
 # フェリシア vs オルバス
@@ -56,6 +56,7 @@ GC
 ## 確定反撃
 
 ## 反撃確定
+
 [[AUvsFE#確定反撃]]
 
 ## 動画

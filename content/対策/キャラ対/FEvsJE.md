@@ -5,7 +5,7 @@ aliases:
 linter-yaml-title-alias: フェリシア vs ジェダ
 tags: []
 created: 2025-06-11
-modified: 2025-06-16
+modified: 2025-06-26
 ---
 
 # フェリシア vs ジェダ
@@ -14,8 +14,8 @@ modified: 2025-06-16
 
 ## vs ジェダ
 
-立小 K 置き
-入れ替え滑空に屈大 P 対空
+立小 K 連打
+めくる動きに屈大 P 対空
 前飛びで深追いしない
 
 ## 概要

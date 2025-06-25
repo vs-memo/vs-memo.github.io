@@ -5,7 +5,7 @@ aliases:
 linter-yaml-title-alias: フェリシア vs バレッタ
 tags: []
 created: 2025-06-11
-modified: 2025-06-16
+modified: 2025-06-26
 ---
 
 # フェリシア vs バレッタ
@@ -16,7 +16,7 @@ modified: 2025-06-16
 
 空中投げ
 不能回避の移動起き
-中段への反撃
+無闇に立たない
 
 ## 概要
 
