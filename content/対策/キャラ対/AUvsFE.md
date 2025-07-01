@@ -1,19 +1,19 @@
 ---
-title: AUvsFE
+title: オルバス vs フェリシア
+aliases:
+  - オルバス vs フェリシア
+linter-yaml-title-alias: オルバス vs フェリシア
 tags: []
 created: 2025-06-11
-modified: 2025-06-26
+modified: 2025-06-29
 ---
 
-# AUvsFE
+# オルバス vs フェリシア
 
 %%3 行対策%%
 
 ## vs フェリシア
 
-対空の使い分け
-起き上がり方向
-飛びがかみ合ったら最大
 
 ## 概要
 
@@ -22,10 +22,6 @@ modified: 2025-06-26
 ### 牽制
 
 ### 対空
-
-- 遠立小 K
-- 屈中 P
-- 屈大 P
 
 ## 起き攻め、有利状況、択
 
