@@ -1,13 +1,10 @@
 ---
-title: Darkstalkers 3 Death Generator
-aliases:
-  - Darkstalkers 3 Death Generator
-linter-yaml-title-alias: Darkstalkers 3 Death Generator
+title: D3D Generator
 tags: []
 created: 2025-06-11
-modified: 2025-06-13
+modified: 2025-07-13
 ---
 
-# Darkstalkers 3 Death Generator
+# D3D Generator
 
 [Darkstalkers 3 Death Generator](https://deathgenerator.com/#ds3)
