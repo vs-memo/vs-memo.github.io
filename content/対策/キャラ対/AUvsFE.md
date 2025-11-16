@@ -5,7 +5,7 @@ aliases:
 linter-yaml-title-alias: オルバス vs フェリシア
 tags: []
 created: 2025-06-11
-modified: 2025-06-29
+modified: 2025-11-16
 ---
 
 # オルバス vs フェリシア
@@ -13,7 +13,6 @@ modified: 2025-06-29
 %%3 行対策%%
 
 ## vs フェリシア
-
 
 ## 概要
 
