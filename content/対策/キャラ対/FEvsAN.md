@@ -5,7 +5,7 @@ aliases:
 linter-yaml-title-alias: フェリシア vs アナカリス
 tags: []
 created: 2025-06-11
-modified: 2025-06-17
+modified: 2025-11-18
 ---
 
 # フェリシア vs アナカリス
