@@ -5,7 +5,7 @@ aliases:
 linter-yaml-title-alias: モリガン vs バレッタ
 tags: []
 created: 2025-06-11
-modified: 2025-11-30
+modified: 2026-07-08
 ---
 
 # モリガン vs バレッタ
