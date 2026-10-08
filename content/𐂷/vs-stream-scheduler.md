@@ -23,6 +23,8 @@ YouTube Data API v3（ライブ配信枠の作成および配信ストリーム�
 
 取得した権限は上記の目的にのみ使用します。詳細は [プライバシーポリシー](vs-stream-scheduler-privacy) を参照してください。
 
+%%
 ## 連絡先
 
 moroccmbr@gmail.com
+%%
