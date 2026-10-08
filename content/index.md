@@ -39,3 +39,8 @@ modified: 2025-07-08
 [[オルバス]]
 [[サスカッチ]]
 [[レイレイ]]
+
+## リンク
+
+[YouTube チャンネル](https://www.youtube.com/@ccomoro1411)
+[対戦ダイアグラム](https://vs-memo.github.io/static/stats.html)
