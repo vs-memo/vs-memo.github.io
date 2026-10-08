@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8"><title>ニチアサセイヴァー 対戦ダイアグラム</title>
+<style>
+/* キャラ表（左）とダイアグラム（右）を合わせた枠は高さ 810px で、比率（16:9 / 4:3 / 3:2）を選べる。
+   キャラ表は枠の幅の 24%。行の高さは (810 − 枠線 2px) ÷ 16 行 = 50.5px に固定し、左右の行を横一列にそろえる。
+   2つの表はすき間なくつなげ、境目と外周の線を黒にする。内訳の行（.cap）は表のすぐ上に付ける
+   文字の大きさは fit() が、マスからはみ出さない一番大きいサイズを探して --fu（キャラ表）と --fd（ダイアグラム）に入れる */
+body { font-family: "BIZ UDPGothic", sans-serif; margin: 20px 28px; color: #111; background: #ececec; }
+h1 { font-size: 26px; margin: 0 0 6px; } h2 { font-size: 20px; margin: 26px 0 4px; display: inline-block; }
+.frame { margin-top: 6px; background: #ececec; }
+/* 内訳の行は表の一部のセルとして見せる。外周は黒。下の線は表の上端の黒い線と重ねて1本にする */
+.cap { font-size: 14px; padding: 6px 8px; background: #e2e2e2; border: 2px solid #000; border-bottom: none; }
+.row { display: grid; grid-template-columns: 24% 1fr; gap: 0; height: 810px; }
+.row table { margin: 0; width: 100%; table-layout: fixed; }
+.row tr { height: 50.5px; }
+/* 境目：キャラ表の右端の線は消し、ダイアグラムの左端を黒にする（線が二重にならないように） */
+.use tr > :last-child { border-right: none; }
+.dia tr > :first-child { border-left: 2px solid #000; }
+/* 外周 */
+.use tr > :first-child { border-left-color: #000; }
+.dia tr > :last-child { border-right-color: #000; }
+.row tr:first-child > * { border-top-color: #000; }
+.row tr:last-child > * { border-bottom-color: #000; }
+table { border-collapse: collapse; margin: 6px 0; background: #fff; }
+th, td { border: 2px solid #9a9a9a; padding: 1px 3px; text-align: center; white-space: nowrap; overflow: hidden; }
+.use th, .use td { font-size: var(--fu, 14px); }
+.dia th, .dia td { font-size: var(--fd, 12px); padding: 1px; }
+.dia tr:first-child th:first-child { font-size: calc(var(--fd, 12px) * 0.7); }
+.mirror { background: #ddd; color: #888; }
+.use th:first-child { text-align: left; }
+th.sort { cursor: pointer; background: #e2e2e2; user-select: none; }
+button.shot { font-size: 14px; margin-left: 12px; padding: 3px 10px; vertical-align: 3px; cursor: pointer; }
+p, li, label { font-size: 14px; }
+select { font-size: 14px; padding: 2px 5px; }
+/* ダイヤの計算：表（16:9）と同じ 1440x810 の枠。本文は 1 本の流れにして、ブラウザの段組みで左右 2 段に自動で振り分ける。
+   文字の大きさは fitExplain() が、2 段に収まる（3 段目にあふれない）一番大きいサイズを探して --fe に入れる */
+.explain { width: 1440px; height: 810px; box-sizing: border-box; display: grid; grid-template-rows: auto 1fr; row-gap: 10px;
+  padding: 18px 30px 22px; background: #ececec; border: 2px solid #000; margin-top: 6px; overflow: hidden; }
+.explain .extitle { font-size: 24px; font-weight: bold; padding-bottom: 6px; border-bottom: 2px solid #000; }
+.explain .body { column-count: 2; column-gap: 36px; column-fill: balance; min-height: 0; overflow: hidden; }
+.explain h3 { font-size: calc(var(--fe, 15px) * 1.2); margin: 0.8em 0 0.25em; padding-bottom: 2px; border-bottom: 2px solid #9a9a9a;
+  break-after: avoid; }
+.explain .body > h3:first-child { margin-top: 0; }
+.explain p, .explain li { font-size: var(--fe, 15px); line-height: 1.6; margin: 0.25em 0; }
+.explain ol, .explain ul { margin: 0.25em 0; padding-left: 1.4em; }
+.explain li { break-inside: avoid; }
+.explain .refs li { font-size: calc(var(--fe, 15px) * 0.9); line-height: 1.45; }
+</style></head><body>
+<h1>ニチアサセイヴァー 対戦ダイアグラム</h1>
+<ul>
+<li>右の表は縦が自分のキャラ、横が相手のキャラ。数字は縦のキャラの勝率（%）。マスにマウスを乗せると「勝ち数 win / 試合数」が出る。</li>
+<li>青が勝ち越し、オレンジが負け越し（50% から離れるほど濃い）。</li>
+<li>右の表に入るのは「集計対象」だけ。左の表の対戦数と勝率は、勝敗が付いた試合で数える（同キャラ戦も入る）。</li>
+<li>ダイヤ：0〜10 の点数。5 が五分、6 なら「よく使われた相手と 10 回戦うと、平均して 6 回勝てそう」という見積もり（くわしくは下の「ダイヤの計算」）。</li>
+<li>左の表の見出しを押すと並べ替え（もう一度押すと逆順）。右の表の縦横も同じ順になる。</li>
+<li>表の比率は上で選べる（16:9 / 4:3 / 3:2、高さ 810px）。文字の大きさは比率に合わせて自動で決まる。</li>
+<li>「画像で保存」で、その表（キャラ表とダイアグラム）を PNG で保存できる。</li>
+<li>作成 2026-10-08 18:26</li>
+</ul>
+<label>表の比率 <select id="ratio"><option value="1.7777778" selected>16:9</option><option value="1.3333333">4:3</option><option value="1.5">3:2</option></select></label>（高さ 810px）
+<section><h2>総合</h2><button class="shot" data-id="all">画像で保存</button><div id="all"></div></section>
+<section><h2>期間指定</h2><button class="shot" data-id="range">画像で保存</button><br>
+<label>開始 <select id="from"></select></label>
+<label>終了 <select id="to"></select></label>
+<div id="range"></div></section>
+<section><button class="shot" data-id="explain" style="margin:26px 0 0">ダイヤの計算を画像で保存</button>
+<div id="explain" class="frame explain">
+<div class="extitle">ダイヤの計算</div>
+<div class="body">
+<h3>ひとことで言うと</h3>
+<p>この配信でよく使われたキャラほど多く当たると考えて、10 回戦ったら平均して何回勝てそうかを、対戦の記録から見積もった点数です。
+5 なら五分五分、6 なら 6 勝 4 敗くらい、4 なら 4 勝 6 敗くらいです。</p>
+<h3>計算のしかた（3 つのステップ）</h3>
+<ol>
+<li><b>相手ごとの勝ちやすさを出す</b>：計算するときだけ、2 勝 2 敗の仮の記録を足します。<br>
+勝ちやすさ ＝（勝った回数 ＋ 2）÷（戦った回数 ＋ 4）<br>
+例：1 戦 1 勝 → 0.6（100% にはしない）。10 戦 8 勝 → 約 0.71。
+試合が多いほど、記録の勝率に近づきます。まだ戦っていない相手は 0.5（五分）です。</li>
+<li><b>よく使われた相手ほど重く数えて平均する</b>（自分と同じキャラは除く）：<br>
+勝てそうな割合 ＝（A の使用回数 × A への勝ちやすさ ＋ B の使用回数 × B への勝ちやすさ ＋ …）÷（相手の使用回数の合計）</li>
+<li><b>10 点満点にする</b>：ダイヤ ＝ 勝てそうな割合 × 10</li>
+</ol>
+<h3>例</h3>
+<p>A が 30 回、B が 10 回使われ、A への勝ちやすさが 0.6、B が 0.4 なら、
+(30×0.6 ＋ 10×0.4) ÷ (30＋10) ＝ 0.55 → ダイヤ 5.5。よく使われる A に強いので、5 より少し上になります。</p>
+<h3>気をつけること</h3>
+<p>この期間・この配信の対戦だけから出した数字です。試合が少ないキャラや、まだ戦っていない相手が多いキャラは 5 に近く出やすく、
+その 5 は「互角」ではなく「まだよく分からない」という意味のこともあります。</p>
+<h3>理論的背景</h3>
+<p>期間内のキャラ j の使用回数（勝敗の付いた試合数）を u<sub>j</sub>、キャラ i の相手 j に対する勝ち数と試合数を w<sub>ij</sub>、n<sub>ij</sub> とする。</p>
+<p style="margin-left:2em">p̂<sub>ij</sub> ＝ (w<sub>ij</sub> ＋ 2) ／ (n<sub>ij</sub> ＋ 4)<br>
+x<sup>(i)</sup><sub>j</sub> ＝ u<sub>j</sub> ／ Σ<sub>k≠i</sub> u<sub>k</sub>（j ≠ i）、　x<sup>(i)</sup><sub>i</sub> ＝ 0<br>
+D<sub>i</sub> ＝ 10 × Σ<sub>j</sub> x<sup>(i)</sup><sub>j</sub> p̂<sub>ij</sub> ＝ 10 × (P x<sup>(i)</sup>)<sub>i</sub></p>
+<p>使用率による勝率の重み付き平均は、進化ゲーム理論の期待利得 (Ax)<sub>i</sub>（A は利得行列、x は集団の戦略頻度）と同じ形式を持つ<a href="#ref1">[1]</a>。
+ただし、相手の分布 x<sup>(i)</sup> は同キャラを除いてキャラごとに正規化し直すため、共通の集団分布に対する適応度そのものではない。</p>
+<p>経験的な勝率の表を 2 人ゲームの利得行列として扱う手法は、対戦ゲームのメタゲーム分析で用いられている<a href="#ref2">[2]</a>。
+本ページの集計は引き分けを除き同じ試合を両側から数えるので p<sub>ij</sub> ＋ p<sub>ji</sub> ＝ 1 となり、定和ゲーム（各利得から 0.5 を引けば零和ゲーム）として扱える。</p>
+<p>カードゲームの環境分析でも、対面勝率を相手デッキの出現頻度で重み付けした「Power Ranking」が使われている<a href="#ref3">[3]</a>（重み付けの考え方のみ参照）。</p>
+<p>p̂<sub>ij</sub> には、95% 信頼区間の Agresti–Coull plus four 近似（成功と失敗を 2 つずつ加える）と同じ補正を点推定として用いた<a href="#ref4">[4]</a>（区間は計算しない）。
+試合数の少ない組み合わせで勝率が 0 や 1 に張り付くのを防ぐ。</p>
+<h3>解釈上の注意</h3>
+<ul>
+<li>相手の使用率はその期間の観測値なので、ダイヤは環境に依存する相対的な指標である。</li>
+<li>対面別の勝率を使用率で平均した値であり、キャラ固有の強さを推定したものではない。Bradley–Terry モデルのように各キャラに単一の強さを仮定する方法でも、三すくみのような循環的な相性やプレイヤーの技量は扱えない。</li>
+<li>小さな差で優劣を断定せず、組み合わせごとの試合数も確認する。</li>
+<li>プレイヤーの技量はキャラの強さと区別できない。特定のプレイヤーが特定のキャラを多く使うと、その強さがキャラの値に混ざる（交絡）。</li>
+<li>同じ人同士の連戦が多く、試合は独立とは限らない。配信外のプレイヤーや別の環境への予測精度は保証しない。</li>
+<li>ダイヤが高くても、すべての相手に有利とは限らない。総合点は対面ごとの相性を平均で隠すので、対面別勝率も併せて見る。</li>
+<li>同キャラ戦は相性差を表さないため除外する（設計上の選択）。自キャラ以外の相手がいない場合は便宜上 5 とする。</li>
+</ul>
+<h3>参考文献</h3>
+<ol class="refs">
+<li id="ref1">P. D. Taylor and L. B. Jonker, “Evolutionarily stable strategies and game dynamics,” <i>Mathematical Biosciences</i>, vol. 40, no. 1–2, pp. 145–156, 1978.
+<a href="https://doi.org/10.1016/0025-5564(78)90077-9">doi:10.1016/0025-5564(78)90077-9</a></li>
+<li id="ref2">D. Hernandez, C. T. T. Gbadamosi, J. Goodman, and J. A. Walker, “Metagame Autobalancing for Competitive Multiplayer Games,” in <i>Proc. 2020 IEEE Conference on Games (CoG)</i>, pp. 275–282, 2020.
+<a href="https://doi.org/10.1109/CoG47356.2020.9231762">doi:10.1109/CoG47356.2020.9231762</a></li>
+<li id="ref3">Vicious Syndicate, “Data Reaper Report – FAQ.”
+<a href="https://www.vicioussyndicate.com/drr/faq-data-reaper-report/">https://www.vicioussyndicate.com/drr/faq-data-reaper-report/</a>（2026-10-08 閲覧）</li>
+<li id="ref4">A. Agresti and B. A. Coull, “Approximate is better than ‘exact’ for interval estimation of binomial proportions,” <i>The American Statistician</i>, vol. 52, no. 2, pp. 119–126, 1998.
+<a href="https://doi.org/10.1080/00031305.1998.10480550">doi:10.1080/00031305.1998.10480550</a></li>
+</ol>
+</div>
+</div></section>
+<script>
+const DAYS = {"2026-09-27": {"dia": {"Bishamon|Morrigan": [2, 8], "Morrigan|Bishamon": [6, 8], "Gallon|Sasquatch": [3, 3], "Sasquatch|Gallon": [0, 3], "Morrigan|Gallon": [1, 4], "Gallon|Morrigan": [3, 4], "Morrigan|Sasquatch": [3, 5], "Sasquatch|Morrigan": [2, 5], "Bishamon|Gallon": [1, 6], "Gallon|Bishamon": [5, 6], "Sasquatch|Bishamon": [0, 1], "Bishamon|Sasquatch": [1, 1], "Felicia|Lei-Lei": [2, 4], "Lei-Lei|Felicia": [2, 4], "Felicia|Bishamon": [2, 4], "Bishamon|Felicia": [2, 4], "Felicia|Gallon": [0, 1], "Gallon|Felicia": [1, 1], "Bishamon|Jedah": [1, 6], "Jedah|Bishamon": [5, 6], "Jedah|Morrigan": [2, 3], "Morrigan|Jedah": [1, 3], "Morrigan|Lei-Lei": [2, 3], "Lei-Lei|Morrigan": [1, 3], "Jedah|Gallon": [0, 1], "Gallon|Jedah": [1, 1], "Jedah|Lei-Lei": [4, 5], "Lei-Lei|Jedah": [1, 5], "Gallon|Lei-Lei": [1, 2], "Lei-Lei|Gallon": [1, 2], "Lei-Lei|Bishamon": [1, 2], "Bishamon|Lei-Lei": [1, 2], "Felicia|Sasquatch": [1, 1], "Sasquatch|Felicia": [0, 1], "Lei-Lei|Sasquatch": [0, 3], "Sasquatch|Lei-Lei": [3, 3], "Felicia|Morrigan": [2, 2], "Morrigan|Felicia": [0, 2], "Morrigan|Bulleta": [7, 8], "Bulleta|Morrigan": [1, 8], "Morrigan|Lilith": [6, 13], "Lilith|Morrigan": [7, 13], "Lilith|Sasquatch": [1, 1], "Sasquatch|Lilith": [0, 1], "Lilith|Bulleta": [3, 5], "Bulleta|Lilith": [2, 5], "Lilith|Felicia": [0, 1], "Felicia|Lilith": [1, 1], "Lilith|Jedah": [1, 2], "Jedah|Lilith": [1, 2], "Bulleta|Felicia": [0, 1], "Felicia|Bulleta": [1, 1], "Felicia|Jedah": [1, 2], "Jedah|Felicia": [1, 2], "Bulleta|Jedah": [0, 2], "Jedah|Bulleta": [2, 2], "Lei-Lei|Lilith": [1, 1], "Lilith|Lei-Lei": [0, 1]}, "use": {"Bishamon": [27, 8, 27], "Morrigan": [51, 28, 50], "Gallon": [17, 14, 17], "Sasquatch": [14, 5, 14], "Felicia": [16, 10, 16], "Lei-Lei": [20, 7, 20], "Jedah": [22, 15, 21], "Bulleta": [18, 4, 18], "Lilith": [27, 14, 27]}, "kinds": {"集計対象": 100, "キャラ不明": 1, "同キャラ": 5, "勝敗不明": 1}, "records": 107}, "2026-10-04": {"dia": {"Morrigan|Jedah": [0, 6], "Jedah|Morrigan": [6, 6], "Bishamon|Morrigan": [0, 5], "Morrigan|Bishamon": [5, 5], "Demitri|Morrigan": [0, 1], "Morrigan|Demitri": [1, 1], "Felicia|Bishamon": [1, 2], "Bishamon|Felicia": [1, 2], "Victor|Felicia": [0, 1], "Felicia|Victor": [1, 1], "Morrigan|Q-Bee": [5, 11], "Q-Bee|Morrigan": [6, 11], "Felicia|Q-Bee": [3, 4], "Q-Bee|Felicia": [1, 4], "Morrigan|Aulbath": [5, 7], "Aulbath|Morrigan": [2, 7], "Q-Bee|Aulbath": [1, 4], "Aulbath|Q-Bee": [3, 4], "Aulbath|Bishamon": [3, 4], "Bishamon|Aulbath": [1, 4], "Felicia|Aulbath": [1, 1], "Aulbath|Felicia": [0, 1], "Morrigan|Bulleta": [4, 6], "Bulleta|Morrigan": [2, 6], "Bishamon|Bulleta": [1, 3], "Bulleta|Bishamon": [2, 3], "Bishamon|Gallon": [0, 3], "Gallon|Bishamon": [3, 3], "Gallon|Bulleta": [4, 5], "Bulleta|Gallon": [1, 5], "Gallon|Sasquatch": [3, 5], "Sasquatch|Gallon": [2, 5], "Bishamon|Lilith": [0, 1], "Lilith|Bishamon": [1, 1], "Lilith|Gallon": [3, 5], "Gallon|Lilith": [2, 5], "Morrigan|Gallon": [1, 2], "Gallon|Morrigan": [1, 2], "Sasquatch|Lilith": [1, 1], "Lilith|Sasquatch": [0, 1], "Sasquatch|Bishamon": [1, 1], "Bishamon|Sasquatch": [0, 1], "Morrigan|Lilith": [2, 4], "Lilith|Morrigan": [2, 4], "Morrigan|Sasquatch": [0, 1], "Sasquatch|Morrigan": [1, 1], "Sasquatch|Bulleta": [1, 2], "Bulleta|Sasquatch": [1, 2], "Bulleta|Zabel": [0, 1], "Zabel|Bulleta": [1, 1], "Zabel|Gallon": [1, 1], "Gallon|Zabel": [0, 1], "Sasquatch|Zabel": [0, 1], "Zabel|Sasquatch": [1, 1], "Zabel|Lilith": [3, 4], "Lilith|Zabel": [1, 4], "Zabel|Morrigan": [1, 2], "Morrigan|Zabel": [1, 2], "Bulleta|Lilith": [0, 2], "Lilith|Bulleta": [2, 2], "Zabel|Felicia": [0, 1], "Felicia|Zabel": [1, 1], "Felicia|Bulleta": [1, 1], "Bulleta|Felicia": [0, 1]}, "use": {"Morrigan": [45, 24, 45], "Jedah": [6, 6, 6], "Bishamon": [19, 3, 19], "Demitri": [3, 1, 3], "Felicia": [11, 8, 10], "Victor": [1, 0, 1], "Q-Bee": [19, 8, 19], "Aulbath": [16, 8, 16], "Bulleta": [21, 6, 20], "Gallon": [24, 14, 23], "Sasquatch": [11, 6, 11], "Lilith": [18, 9, 17], "Zabel": [10, 7, 10]}, "kinds": {"集計対象": 98, "同キャラ": 2, "勝敗不明": 2}, "records": 102}};
+const CHARS = ["Jedah", "Bulleta", "Lilith", "Q-Bee", "Demitri", "Gallon", "Victor", "Zabel", "Morrigan", "Anakaris", "Felicia", "Bishamon", "Aulbath", "Sasquatch", "Lei-Lei"];
+const LABELS = {"Demitri": "🧛DE", "Morrigan": "🦇MO", "Lilith": "🌙LI", "Jedah": "🩸JE", "Q-Bee": "🐝QB", "Lei-Lei": "📜LE", "Bulleta": "🧺BU", "Victor": "⚡VI", "Zabel": "💀ZA", "Gallon": "🐺GA", "Felicia": "🐈️FE", "Bishamon": "👹BI", "Aulbath": "🐸AU", "Sasquatch": "⛄SA", "Anakaris": "🤕AN"};
+const NUMS = {"Jedah": 1, "Bulleta": 2, "Lilith": 3, "Q-Bee": 4, "Demitri": 5, "Gallon": 6, "Victor": 7, "Zabel": 8, "Morrigan": 9, "Anakaris": 10, "Felicia": 11, "Bishamon": 12, "Aulbath": 13, "Sasquatch": 14, "Lei-Lei": 15};
+const dates = Object.keys(DAYS).sort();
+const ratio = document.getElementById("ratio");   // 表の比率（fit() が使う）
+
+// 50% を白、勝ち越しを青、負け越しをオレンジ。差が 30 ポイントで最も濃い。
+// 最も濃いときも黒文字とのコントラスト比 6.6 以上（青）・10 以上（オレンジ）になる濃さに抑えてある。
+// stats.py の _color と同じ式。変えるときは両方変える
+function color(rate) {
+  const k = Math.min(Math.abs(rate - 0.5) / 0.3, 1);
+  const base = rate > 0.5 ? [40, 110, 220] : [240, 140, 40];
+  return "rgb(" + base.map(c => Math.round(255 + (c - 255) * k * 0.7)).join(",") + ")";
+}
+
+function sum(ds) {
+  const dia = {}, use = {}, kinds = {};
+  let records = 0;
+  for (const d of ds) {
+    const x = DAYS[d];
+    records += x.records;
+    for (const [k, v] of Object.entries(x.kinds)) kinds[k] = (kinds[k] || 0) + v;
+    for (const [k, v] of Object.entries(x.dia)) {
+      dia[k] = dia[k] || [0, 0]; dia[k][0] += v[0]; dia[k][1] += v[1];
+    }
+    for (const [k, v] of Object.entries(x.use)) {
+      use[k] = use[k] || [0, 0, 0]; v.forEach((n, i) => use[k][i] += n);
+    }
+  }
+  return { dia, use, kinds, records };
+}
+
+// ダイヤ（0〜10、5 が五分）。計算はページ下の「ダイヤの計算」のとおり。
+// 使用率で重み付けした対面勝率の平均（進化ゲーム理論の期待利得 (Ax)_i と同じ形だが、同キャラを除いてキャラごとに
+// 相手の分布を作り直すので適応度そのものではない）。少ない試合の補正は plus four と同じ (w+2)/(n+4)。未対戦は 0.5
+function diamonds(s) {
+  const games = c => (s.use[c] || [0, 0, 0])[2];
+  const played = CHARS.filter(c => games(c) > 0);
+  const out = {};
+  for (const c of played) {
+    let num = 0, den = 0;
+    for (const o of played) {
+      if (o === c) continue;
+      const share = games(o);                     // 相手の使用率（割合にするのは最後に den で割るのと同じ）
+      const [w, n] = s.dia[c + "|" + o] || [0, 0];
+      num += share * (w + 2) / (n + 4); den += share;
+    }
+    out[c] = 10 * (den ? num / den : 0.5);
+  }
+  return out;
+}
+
+// キャラ表の並べ方。見出しを押すと昇順・降順が入れ替わり、ダイアグラムの縦横も同じ順になる
+const SORT = { all: { key: "no", asc: true }, range: { key: "no", asc: true } };
+const VIEW = {};   // 表示中の期間（並べ替えで描き直すため）
+
+function order(s, dv, st) {
+  const v = c => {
+    const [, w, n] = s.use[c] || [0, 0, 0];
+    if (st.key === "games") return n;
+    if (st.key === "rate") return n ? w / n : -1;      // 試合の無いキャラは昇順で先頭、降順で末尾
+    if (st.key === "dia") return c in dv ? dv[c] : -1;
+    return NUMS[c];
+  };
+  return [...CHARS].sort((a, b) => (st.asc ? 1 : -1) * (v(a) - v(b)) || NUMS[a] - NUMS[b]);
+}
+
+const FONTS = {};   // 表ごとに決めた文字の大きさ。並べ替えでは測り直さない
+
+function render(id, ds, keepFont = false) {
+  const el = document.getElementById(id);
+  VIEW[id] = ds;
+  if (!ds.length) { el.innerHTML = "<p>この期間の配信は無い。</p>"; return; }
+  const s = sum(ds), dv = diamonds(s), st = SORT[id], cs = order(s, dv, st);
+  const k = n => s.kinds[n] || 0;
+  let h = `<div class="cap">配信 ${ds.length} 回（${ds[0]} 〜 ${ds[ds.length - 1]}）、記録 ${s.records} 試合：` +
+    `集計対象 ${k("集計対象")}、同キャラ ${k("同キャラ")}、勝敗不明 ${k("勝敗不明")}` +
+    (k("キャラ不明") ? `、キャラ不明 ${k("キャラ不明")}` : "") + (k("引き分け") ? `、引き分け ${k("引き分け")}` : "") + "</div>";
+  let d = '<table class="dia"><tr><th>自＼相手</th>' + cs.map(c => `<th>${LABELS[c]}</th>`).join("") + "</tr>";
+  for (const me of cs) {
+    d += `<tr><th>${LABELS[me]}</th>`;
+    for (const op of cs) {
+      const v = s.dia[me + "|" + op];
+      if (me === op) d += '<td class="mirror">-</td>';
+      else if (!v || !v[1]) d += "<td></td>";
+      else d += `<td style="background:${color(v[0] / v[1])}" title="${v[0]} win / ${v[1]}">${(100 * v[0] / v[1]).toFixed(2)}</td>`;
+    }
+    d += "</tr>";
+  }
+  d += "</table>";
+  const arrow = key => st.key === key ? (st.asc ? " ▲" : " ▼") : ' <span style="visibility:hidden">▼</span>';
+  const head = (key, name) => `<th class="sort" data-id="${id}" data-key="${key}">${name}${arrow(key)}</th>`;
+  let t = `<table class="use"><tr>${head("no", "キャラ")}${head("games", "対戦数")}${head("rate", "勝率")}${head("dia", "ダイヤ")}</tr>`;
+  for (const c of cs) {
+    const [, w, n] = s.use[c] || [0, 0, 0];
+    t += `<tr><th>${LABELS[c]}</th><td>${n}</td><td>${n ? (100 * w / n).toFixed(2) : "-"}</td>` +
+      `<td>${c in dv ? dv[c].toFixed(1) : "-"}</td></tr>`;
+  }
+  t += "</table>";
+  el.innerHTML = `<div class="frame">${h}<div class="row">${t}${d}</div></div>`;
+  const frame = el.querySelector(".frame");
+  if (keepFont && FONTS[id]) {
+    frame.style.width = FONTS[id].width;
+    for (const [v, f] of Object.entries(FONTS[id].vars)) frame.querySelector(".row").style.setProperty(v, f);
+  } else {
+    fit(frame);
+    const row = frame.querySelector(".row");
+    FONTS[id] = { width: frame.style.width, vars: { "--fu": row.style.getPropertyValue("--fu"), "--fd": row.style.getPropertyValue("--fd") } };
+  }
+  el.querySelectorAll("th.sort").forEach(th => th.onclick = () => {
+    const st2 = SORT[th.dataset.id];
+    // 同じ列なら向きを反転。別の列に変えたら、キャラは昇順、数値は大きい順から始める
+    if (st2.key === th.dataset.key) st2.asc = !st2.asc;
+    else { st2.key = th.dataset.key; st2.asc = th.dataset.key === "no"; }
+    render(th.dataset.id, VIEW[th.dataset.id], true);   // 並べ替えは文字の大きさを変えない
+  });
+}
+
+const from = document.getElementById("from"), to = document.getElementById("to");
+for (const d of dates) { from.add(new Option(d, d)); to.add(new Option(d, d)); }
+from.value = dates[0]; to.value = dates[dates.length - 1];
+function update() {
+  const a = from.value <= to.value ? from.value : to.value, b = from.value <= to.value ? to.value : from.value;
+  render("range", dates.filter(d => d >= a && d <= b));
+}
+from.onchange = to.onchange = update;
+render("all", dates);
+update();
+
+// 比率を変えたら両方の枠を描き直す（文字の大きさも合わせ直す）
+ratio.onchange = () => { render("all", VIEW.all); render("range", VIEW.range); };
+
+// 枠の幅を比率に合わせ、はみ出さない一番大きい文字の大きさを探す
+function fit(frame) {
+  frame.style.width = Math.round(810 * Number(ratio.value)) + "px";
+  const row = frame.querySelector(".row");
+  const over = sel => [...row.querySelectorAll(sel)].some(c => c.scrollWidth > c.clientWidth || c.scrollHeight > c.clientHeight);
+  for (const [v, sel] of [["--fu", ".use th, .use td"], ["--fd", ".dia th, .dia td"]]) {
+    let f = 28;
+    row.style.setProperty(v, f + "px");
+    while (f > 7 && over(sel)) { f -= 0.5; row.style.setProperty(v, f + "px"); }
+  }
+}
+
+// 枠（キャラ表とダイアグラム）を PNG で保存する。ページの見た目をそのまま SVG に包んで絵にする
+async function shot(id) {
+  const row = document.querySelector("#" + id + " .frame") || document.getElementById(id);
+  const w = row.offsetWidth, h = row.offsetHeight, scale = 2;
+  const css = document.querySelector("style").textContent;
+  const body = new XMLSerializer().serializeToString(row);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%">` +
+    `<div xmlns="http://www.w3.org/1999/xhtml" style="font-family: 'BIZ UDPGothic', sans-serif; color: #111;"><style>${css}</style>${body}</div>` +
+    `</foreignObject></svg>`;
+  const img = new Image();
+  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  await img.decode();
+  const canvas = document.createElement("canvas");
+  canvas.width = w * scale; canvas.height = h * scale;
+  const g = canvas.getContext("2d");
+  g.scale(scale, scale); g.drawImage(img, 0, 0);
+  const ds = VIEW[id];
+  const name = id === "explain" ? "stats_ダイヤの計算.png"
+    : `stats_${id === "all" ? "総合" : "期間"}_${ds[0]}_${ds[ds.length - 1]}_${ratio.selectedOptions[0].text.replace(":", "x")}.png`;
+  const a = document.createElement("a");
+  a.download = name;
+  a.href = canvas.toDataURL("image/png");
+  a.click();
+  return name;
+}
+document.querySelectorAll("button.shot").forEach(b => b.onclick = () => shot(b.dataset.id));
+
+// ダイヤの計算の文字の大きさ：本文が 2 段に収まる（はみ出して 3 段目ができない）一番大きいサイズ
+function fitExplain() {
+  const ex = document.getElementById("explain"), body = ex.querySelector(".body");
+  const fits = () => body.scrollWidth <= body.clientWidth + 1 && body.scrollHeight <= body.clientHeight + 1;
+  let f = 22;
+  ex.style.setProperty("--fe", f + "px");
+  while (f > 9 && !fits()) { f -= 0.5; ex.style.setProperty("--fe", f + "px"); }
+}
+document.fonts.ready.then(fitExplain);
+</script>
+</body></html>
