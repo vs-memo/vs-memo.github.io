@@ -5,7 +5,7 @@ aliases:
 linter-yaml-title-alias: 目次
 tags: []
 created: 2025-06-08
-modified: 2025-07-08
+modified: 2026-10-08
 ---
 
 # 目次
@@ -42,5 +42,5 @@ modified: 2025-07-08
 
 ## リンク
 
-[YouTube チャンネル](https://www.youtube.com/@ccomoro1411)
-[対戦ダイアグラム](https://vs-memo.github.io/static/stats.html)
+[YouTube チャンネル](https://www.youtube.com/@ccomoro1411/streams)
+<a href="https://vs-memo.github.io/static/stats.html" data-router-ignore>対戦ダイアグラム</a>
