@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>無人配信ハンズオン</title>
+<style>
+:root { --bg: #ececec; --card: #fff; --text: #111; --muted: #555; --line: #9a9a9a; --accent: #000; --code: #e2e2e2; }
+* { box-sizing: border-box; }
+body { font-family: "BIZ UDPGothic", "Noto Sans JP", sans-serif; margin: 0; color: var(--text); background: var(--bg); line-height: 1.75; }
+main { max-width: 1440px; margin: 0 auto; padding: 20px 28px 64px; }
+@media (max-width: 600px) { main { padding: 16px 16px 48px; } }
+h1 { font-size: 26px; margin: 0 0 4px; }
+h2 { font-size: 21px; margin: 40px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #000; }
+h3 { font-size: 17px; margin: 24px 0 6px; }
+p.lead { color: var(--muted); margin: 0 0 16px; }
+nav.toc { background: var(--card); border: 2px solid var(--line); padding: 10px 18px; margin: 16px 0; }
+nav.toc ol { margin: 4px 0; padding-left: 22px; }
+table { border-collapse: collapse; width: 100%; background: var(--card); margin: 8px 0; font-size: 15px; }
+th, td { border: 2px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
+th { background: var(--code); }
+code { font-family: "IBM Plex Mono", Consolas, monospace; background: var(--code); padding: 1px 4px; font-size: 14px; }
+pre { background: var(--code); border: 2px solid var(--line); padding: 10px 12px; overflow-x: auto; font-size: 14px; line-height: 1.5; }
+pre code { background: none; padding: 0; }
+.flow { display: grid; grid-template-columns: 9em 1fr; gap: 0; background: var(--card); border: 2px solid var(--line); }
+.flow > div { padding: 6px 10px; border-bottom: 1px solid var(--line); }
+.flow > div:nth-child(odd) { font-weight: bold; background: var(--code); }
+.note { background: var(--card); border-left: 4px solid var(--accent); padding: 8px 12px; margin: 10px 0; }
+.warn { border-left-color: #c0392b; }
+ol.steps > li { margin-bottom: 6px; }
+@media (max-width: 600px) { .flow { grid-template-columns: 1fr; } .flow > div:nth-child(odd) { border-bottom: none; } }
+.you { background: #ffaaa3; }
+.ai { background: #a6c8ff; }
+.both { background: #d0b3ff; }
+li.you, li.ai, li.both { padding: 1px 6px; margin-bottom: 4px; }
+span.you, span.ai, span.both { padding: 0 3px; }
+table.roles td:nth-child(2) { background: #ffaaa3; }
+table.roles td:nth-child(3), table.prog td:nth-child(2) { background: #a6c8ff; }
+.part { margin: 56px 0 0; padding: 4px 12px; background: #000; color: #fff; font-weight: bold; font-size: 15px; }
+.tocpart { margin: 8px 0 0; font-weight: bold; font-size: 14px; }
+nav.toc ol { margin-top: 0; }
+.pr { background: var(--card); border: 2px solid var(--line); padding: 6px 12px; margin: 10px 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>無人配信ハンズオン</h1>
+<p class="lead">カプコン ファイティング コレクション（Steam版）のヴァンパイアセイヴァーで、対戦部屋を自動で立てて YouTube Live に無人で配信する仕組みを、自分の PC で作るための手順です。コードは配っていないので、自分で書くか AI に書かせる前提です。AI に渡す文面は <a href="stream-prompt.html" data-router-ignore>AI に渡すプロンプト</a> にあります。</p>
+
+<nav class="toc"><b>目次</b>
+<p class="tocpart">はじめに（解説）</p>
+<ol start="1">
+<li><a href="#overview">できること</a></li>
+<li><a href="#roles">分担：人と AI セッション</a></li>
+<li><a href="#secret">秘密情報の扱い</a></li>
+</ol>
+<p class="tocpart">準備（手順）</p>
+<ol start="4">
+<li><a href="#need">必要なもの</a></li>
+<li><a href="#youtube">YouTube と Google Cloud の準備</a></li>
+<li><a href="#audio">読み上げと音の準備</a></li>
+<li><a href="#obs">OBS の準備</a></li>
+</ol>
+<p class="tocpart">作る（手順）</p>
+<ol start="8">
+<li><a href="#program">AI セッションで作る</a></li>
+<li><a href="#lobby">ロビーを自動で立てる</a></li>
+<li><a href="#settings">設定ファイルの考え方</a></li>
+<li><a href="#tasks">タスク スケジューラに載せる</a></li>
+</ol>
+<p class="tocpart">確かめる（手順）</p>
+<ol start="12">
+<li><a href="#test">テストの順番</a></li>
+</ol>
+<p class="tocpart">仕組み（解説）</p>
+<ol start="13">
+<li><a href="#chapter">チャプターの取り方</a></li>
+</ol>
+<p class="tocpart">参照</p>
+<ol start="14">
+<li><a href="#spec">YouTube の仕様と参照リンク</a></li>
+<li><a href="#errors">よくあるエラー（YouTube と Google Cloud）</a></li>
+<li><a href="#traps">ハマりどころ</a></li>
+</ol>
+<p class="tocpart"><a href="#disclaimer">免責</a></p>
+</nav>
+
+<div class="part">はじめに（解説）</div>
+
+<h2 id="overview">1. できること</h2>
+<p>毎週決まった時刻に、人がいなくても次のことが順に起きます（時刻は例）。</p>
+<div class="flow">
+<div>毎日 12:00</div><div>次回の配信の予約枠を YouTube に作る（枠がもうあれば何もしない）</div>
+<div>開始 10 分前</div><div>スピーカーをミュートする（ゲームの起動音で寝ている人を起こさないため。配信の音は出る）</div>
+<div>開始 5 分前</div><div>ゲームを再起動し、決まったキー操作でパスワード付きのカスタムマッチのロビーを作り、自分は観戦に回る</div>
+<div>開始</div><div>読み上げソフトとオーバーレイ（ゲーム画面に重ねるコメント欄や掲示板）のサーバーを起動 → OBS を起動して設定を検査 → 配信開始 → コメントを画面に出して読み上げる</div>
+<div>終了</div><div>配信停止 → OBS を閉じる → ミュートを戻す → 説明欄に試合ごとのチャプターを書く → 対戦の記録を残す</div>
+<div>終了 5 分後</div><div>ゲームを閉じる（ロビーも消える）</div>
+</div>
+<p>画面にはゲーム画面のほか、コメント欄、参加案内、ルールのメモ、下に流れる豆知識（Tips）と告知を重ねます。</p>
+
+<h3>1-1. 技術スタック</h3>
+<table>
+<tr><th>役割</th><th>使っているもの</th></tr>
+<tr><td>全体の進行</td><td>Python 3.13 以上（venv）、Windows のタスク スケジューラ</td></tr>
+<tr><td>設定</td><td>TOML 1枚（Python 標準の <code>tomllib</code> で読む）</td></tr>
+<tr><td>配信</td><td>OBS Studio。プログラムからは obs-websocket（v5）で操作する</td></tr>
+<tr><td>YouTube の操作</td><td>YouTube Data API v3（予約枠、説明欄、サムネ）、OAuth 2.0（デスクトップ アプリ）</td></tr>
+<tr><td>コメントの取得</td><td>pytchat（KaitoCross のフォーク）</td></tr>
+<tr><td>読み上げ</td><td>VOICEVOX のエンジン（HTTP）、<code>sounddevice</code>、VB-Audio Virtual Cable</td></tr>
+<tr><td>オーバーレイ</td><td>Python 標準の HTTP サーバー ＋ <code>websockets</code>、HTML・CSS・JavaScript の1ファイル、OBS のブラウザソース</td></tr>
+<tr><td>ロビーの自動作成</td><td><code>ctypes</code> から Windows の <code>SendInput</code>（スキャンコード方式）</td></tr>
+<tr><td>チャプター</td><td>OBS のスクリーンショット ＋ <code>pillow</code> で見本画像と比べる</td></tr>
+<tr><td>ミュート</td><td><code>pycaw</code>（Windows のオーディオ API）</td></tr>
+<tr><td>作り方</td><td>AI セッション（PC のファイルを読み書きしてコマンドを動かせるコーディング用 AI）</td></tr>
+</table>
+
+<h2 id="roles">2. 分担：人でないとできないこと・AI セッションに頼めること</h2>
+<p>ソフトの導入、設定ファイルやスクリプトの作成、OBS の組み立てなど、<b>ほとんどの作業は AI セッション（PC のファイルを読み書きしてコマンドを動かせるコーディング用 AI）に指示すれば進められます</b>。人でないとできないのは、ログインや本人確認、秘密の値を扱う所、許可のクリック、見て聞いて決める所だけです。実際に手を動かす部分を色で示しています。</p>
+<p><span class="you">人でないとできない</span>　<span class="ai">AI セッションに指示すればやってくれる</span>　<span class="both">AI が進め、途中で人が許可・判断する</span></p>
+<table class="roles">
+<tr><th>節</th><th class="you">人でないとできないこと</th><th class="ai">AI セッションに頼めること</th></tr>
+<tr><td>4. 必要なもの</td><td>Steam でのゲームの購入と導入、YouTube チャンネルの用意、インストール時の管理者の許可</td><td>OBS・VOICEVOX・仮想ケーブル・Python の導入、仮想環境とパッケージの導入</td></tr>
+<tr><td>5. YouTube と Google Cloud</td><td>5-1〜5-5 のブラウザでの操作（ログイン、電話番号の確認、同意画面、JSON の保存）。5-6 で許可を押す。ストリームキーを OBS に貼る</td><td>認可の入口（<code>--auth</code>）と、API が通るかの確認（<code>--show</code>）を作る</td></tr>
+<tr><td>6. 読み上げと音</td><td>声を聞いて話者を選ぶ。仮想ケーブルのドライバー導入の許可</td><td>VOICEVOX と仮想ケーブルの導入、エンジンの起動、読み上げの部品（プロンプトの段階 3）</td></tr>
+<tr><td>7. OBS</td><td>ストリームキーを貼る。WebSocket サーバーを有効にする（OBS の画面で1回）。ゲームキャプチャを作る。反響の掛かり具合を聞いて調整する</td><td>プロファイルとシーン・ソースの組み立て（WebSocket 経由）、OBS を操作する部品（段階 6・7）</td></tr>
+<tr><td>9. ロビー</td><td>実機でキー列を確かめて AI に渡す</td><td>キーを送るスクリプト（段階 11）</td></tr>
+<tr><td>8. AI セッションで作る</td><td>段階ごとの報告を読んで次へ進める</td><td>部品を全部作る（段階 1〜13）</td></tr>
+<tr><td>10. 設定ファイル</td><td>自分の値（時刻、文言）を決める</td><td>雛形と読み込み・検査（段階 1）、値の書き込み</td></tr>
+<tr><td>11. タスク</td><td>登録してよいか許可する</td><td>時刻からタスクを登録するスクリプト（段階 13）</td></tr>
+<tr><td>12. テスト</td><td>画面と音を見て聞いて判断する。限定公開の配信を許可する</td><td>selfcheck、オフラインのテスト、スクリーンショットの確認</td></tr>
+<tr><td>3. 秘密情報</td><td>秘密のファイルを置く。中身を AI に貼らない</td><td>—（中身を読まない・出さない）</td></tr>
+</table>
+<div class="note">AI セッションに渡す文面は <a href="stream-prompt.html" data-router-ignore>AI に渡すプロンプト</a> にあります。「段階」はそのプロンプトの段階の番号です。5 の Google 側の準備は人にしかできないので、先に済ませてから AI セッションを始めると、AI が途中で止まりにくくなります。</div>
+
+<h2 id="secret">3. 秘密情報の扱い</h2>
+<ul>
+<li class="you"><code>client_secrets.json</code>・<code>token.json</code>・ストリームキー・obs-websocket のパスワードは、人に見せない・公開リポジトリに入れない。</li>
+<li class="you">AI に作業させるときも、これらのファイルの中身は読ませない・貼らない。存在と場所だけ伝える。</li>
+<li class="you">ロビーのパスワードそのものは、ログや画面に出さない。参加者向けに決め方を画面に出すなら、毎回変わる規則（日付から作るなど）にしておくと、荒らしに固定で覚えられにくい。</li>
+</ul>
+
+<div class="part">準備（手順）</div>
+
+<h2 id="need">4. 必要なもの</h2>
+<p class="pr"><b>前提</b>：なし<br><b>結果</b>：ソフトがそろい、Python の仮想環境（venv）ができている。</p>
+
+<table>
+<tr><th>もの</th><th>用途・メモ</th></tr>
+<tr><td>Windows の PC</td><td>配信時刻に起きていて、画面がロックされていないこと。ノート PC なら電源につなぎ、スリープしない設定にする</td></tr>
+<tr><td>カプコン ファイティング コレクション（Steam）</td><td>カスタムマッチでロビーを立てる</td></tr>
+<tr><td>OBS Studio</td><td>配信。プログラムから操作するための機能 obs-websocket（OBS に内蔵）を有効にする（<a href="#obs">7. OBS の準備</a>）</td></tr>
+<tr><td>Python 3.13 以上</td><td>全体の進行。仮想環境（venv）を作ってそこに入れる</td></tr>
+<tr><td>VOICEVOX</td><td>コメントの読み上げ。エンジンを HTTP（既定はポート 50021）で呼ぶ</td></tr>
+<tr><td>VB-Audio Virtual Cable</td><td>読み上げの音を OBS にだけ渡す仮想ケーブル。スピーカーに出さずに配信に乗せられる</td></tr>
+<tr><td>YouTube チャンネル</td><td>ライブ配信を有効にしておく（初回は有効になるまで最大 24 時間かかる）</td></tr>
+<tr><td>Google Cloud のプロジェクト</td><td>YouTube Data API v3 で予約枠の作成や説明欄の書き換えをする</td></tr>
+<tr><td>（任意）VST2 のリバーブ</td><td>ゲーム音や読み上げにゲームセンター風の反響を掛ける。OBS の「VST 2.x プラグイン」フィルターで使う</td></tr>
+</table>
+<div class="note"><span class="ai">ソフトの導入は AI セッションに頼めます</span>（winget や公式のインストーラーを使う）。人がやるのは、<span class="you">Steam でのゲームの購入と導入、YouTube チャンネルの用意、インストール時に出る管理者の許可の確認</span>です。</div>
+<p>Python のパッケージ（実際に使っているもの。導入は AI に頼める）：</p>
+<table>
+<tr><th>パッケージ</th><th>用途</th></tr>
+<tr><td><code>pytchat</code></td><td>ライブのコメントを取る（API の枠を使わない）</td></tr>
+<tr><td><code>google-auth-oauthlib</code> / <code>requests</code></td><td>YouTube Data API の認可と呼び出し</td></tr>
+<tr><td><code>websockets</code></td><td>obs-websocket の操作と、オーバーレイへのコメント送信</td></tr>
+<tr><td><code>sounddevice</code> / <code>numpy</code></td><td>読み上げの音を仮想ケーブルへ鳴らす</td></tr>
+<tr><td><code>pillow</code></td><td>OBS のスクリーンショットから試合の頭・キャラ・勝敗を読む</td></tr>
+<tr><td><code>pycaw</code> / <code>comtypes</code> / <code>psutil</code></td><td>スピーカーのミュート、プロセスの確認</td></tr>
+</table>
+
+<h2 id="youtube">5. YouTube と Google Cloud の準備</h2>
+<p class="pr"><b>前提</b>：4 が済んでいる。<br><b>結果</b>：ライブ配信が使え、ストリームキーが OBS に入り、<code>client_secrets.json</code> と <code>token.json</code> がフォルダにあって、<code>--show</code> が通る。</p>
+
+<p>ここがいちばん手間のかかる所です。<b>YouTube 側の準備</b>と、プログラムが YouTube を操作するための<b>Google Cloud 側の準備</b>の2つに分かれます。画面の名前は 2026 年 11 月時点のもので、Google 側の画面は名前や配置がよく変わります。見つからないときは画面上部の検索窓で探してください。</p>
+
+<h3>最終的にできるもの</h3>
+<table>
+<tr><th>もの</th><th>何か</th><th>扱い</th></tr>
+<tr><td>ストリームキー</td><td>OBS が YouTube へ映像を送るときの鍵</td><td>秘密。OBS の配信設定に入れる</td></tr>
+<tr><td><code>client_secrets.json</code></td><td>「このプログラムは誰のものか」を Google に示すファイル</td><td>秘密。プログラムのフォルダに置く</td></tr>
+<tr><td><code>token.json</code></td><td>初回にブラウザで許可すると作られる、無人で API を使うための鍵</td><td>秘密。プログラムが自動で作る・更新する</td></tr>
+</table>
+
+<h3>5-1. YouTube 側</h3>
+<ol class="steps">
+<li class="you"><b>ライブ配信を有効にする。</b>YouTube Studio の右上「作成」→「ライブ配信を開始」。初めてなら電話番号の確認を求められ、使えるようになるまで最大 24 時間かかる。</li>
+<li class="you"><b>ストリームキーを決める。</b>ライブ配信の画面の「ストリームキーを選択」で、再利用できるキー（最初からある「Default stream key」でよい）を選ぶ。キーを毎回作り直さず、ずっと同じキーを使う。</li>
+<li class="you"><b>OBS にキーを入れる。</b>配信専用のプロファイルで「設定」→「配信」→ サービス「YouTube - RTMPS」→「ストリームキーを使用」を選び、キーを貼る。アカウント連携（「アカウント接続」）は使わない。連携にすると、OBS は配信のたびに「どの枠に流すか」を人が選ぶのを待って送り始めず、無人では止まってしまう。ストリームキー方式なら OBS は決まったキーに黙って送り、同じキーに結び付けた予約枠（自動開始オン）が受信を見て自動で始まる。代わりに OBS の中の YouTube チャット欄は出なくなるが、コメントはプログラムが別に取るので困らない。</li>
+<li class="you"><b>ゲームのタイトルを設定する。</b>Studio の動画の詳細にある「ゲームのタイトル」（カテゴリを「ゲーム」にすると出る欄）は API で設定できない。予約枠ができたら、Studio で手で「Vampire Savior」などを選ぶ。一度設定すれば、プログラムが説明欄を書き換えても消えない。</li>
+</ol>
+
+<h3>5-2. Google Cloud のプロジェクトを作る</h3>
+<ol class="steps">
+<li class="you"><a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud コンソール</a>を開き、<b>配信するチャンネルを持っている Google アカウント</b>でログインする。</li>
+<li class="you">画面上部のプロジェクト選択 →「新しいプロジェクト」→ 名前（例：<code>vs-stream</code>）を付けて「作成」。請求先アカウント（クレジットカード）は要らない。</li>
+<li class="you">作ったプロジェクトが上部で選ばれていることを確かめる。以降はすべてこのプロジェクトの中で作業する。</li>
+<li class="you">左のメニュー「API とサービス」→「ライブラリ」→「YouTube Data API v3」を検索して開き、「有効にする」。</li>
+</ol>
+
+<h3>5-3. 同意画面（Google Auth Platform）を作る</h3>
+<p>「どんなアプリが、何の権限を求めるか」を Google に登録する画面です。自分しか使わないアプリでも必要です。</p>
+<ol class="steps">
+<li class="you">「API とサービス」→「OAuth 同意画面」を開くと「Google Auth Platform」に移る。「開始」を押す。</li>
+<li class="you"><b>アプリ情報</b>：アプリ名（自分しか見ないので何でもよい。例：<code>vs-stream</code>）、ユーザー サポートメール（自分）。</li>
+<li class="you"><b>対象</b>：「外部」を選ぶ（個人の Gmail では「内部」は選べない）。</li>
+<li class="you"><b>連絡先情報</b>：自分のメールアドレス。</li>
+<li class="you">ポリシーに同意して「作成」。</li>
+<li class="you">左の「データアクセス」→「スコープを追加または削除」で、次の2つに印を付けて保存する。
+<br><code>https://www.googleapis.com/auth/youtube</code>
+<br><code>https://www.googleapis.com/auth/youtube.force-ssl</code></li>
+<li class="you">左の「対象」→「テストユーザー」に、配信するチャンネルの Google アカウントを追加する。</li>
+</ol>
+
+<h3>5-4. OAuth クライアントを作って JSON を取る</h3>
+<ol class="steps">
+<li class="you">左の「クライアント」→「クライアントを作成」。</li>
+<li class="you">アプリケーションの種類は<b>「デスクトップ アプリ」</b>。名前は何でもよい。「作成」。</li>
+<li class="you">作成直後の画面で <b>JSON をダウンロード</b>する。後からはシークレットを表示できないことがあるので、この時点で必ず保存する。</li>
+<li class="you">ダウンロードしたファイルの名前を <code>client_secrets.json</code> に変え、プログラムのフォルダに置く。</li>
+</ol>
+<div class="note">「ウェブ アプリケーション」を選ぶと、初回の許可で <code>redirect_uri_mismatch</code> になります。種類を間違えたらクライアントを作り直してください。</div>
+
+<h3>5-5. 「本番環境」に切り替える（7日問題）</h3>
+<div class="note warn"><b>ここを飛ばすと、毎週の自動実行が 7 日後に必ず止まります。</b>公開ステータスが「テスト」のままだと、<code>token.json</code> の中の更新用トークンが 7 日で失効し、<code>invalid_grant</code> というエラーになります。</div>
+<ol class="steps">
+<li class="you">「対象」の「公開ステータス」で「アプリを公開」→ 確認。ステータスが「本番環境」になる。</li>
+<li>Google の審査（確認）は申請しなくてよい。未確認のアプリとして自分のアカウントだけで使う。</li>
+<li>本番環境にした後は、使わない期間が 6 か月続かない限りトークンは切れない。</li>
+</ol>
+
+<h3>5-6. 初回の許可（token.json を作る）</h3>
+<ol class="steps">
+<li class="ai">プログラムを「認可」の動きで実行する（例：<code>schedule.py --auth</code> のような入口を作っておく）。ブラウザが開く。</li>
+<li class="you">配信するチャンネルの Google アカウントを選ぶ。チャンネルが複数ある場合は、ここで配信するチャンネルを選ぶ。</li>
+<li class="you">「Google はこのアプリを確認していません」と出たら、「詳細」→「（アプリ名）（安全ではないページ）に移動」。自分で作ったアプリなので問題ない。
+<br><b>ここが一番迷いやすい。</b>画面で目立つ大きなボタンは「安全なページに戻る」で、これを押すと許可せずに終わってしまう。進むための選択肢は、左下の小さな文字のリンク「詳細」（「Advanced」）で、押すと下に出てくる、さらに小さなリンク「（アプリ名）（安全ではないページ）に移動」をクリックする。ボタンではなくただの文字に見えるので見落としやすい。</li>
+<li class="you">YouTube の管理の権限を「許可」する。ブラウザに完了の表示が出て、フォルダに <code>token.json</code> ができる。</li>
+<li class="ai">予約枠の一覧を見るだけの動き（例：<code>--show</code>）を実行して、API が通ることを確かめる。</li>
+<li class="both"><b>8 日以上たってから</b>もう一度 <code>--show</code> を実行し、まだ通ることを確かめる。通れば 7 日問題は解決している。</li>
+</ol>
+
+<h2 id="audio">6. 読み上げと音の準備</h2>
+<p class="pr"><b>前提</b>：4 が済んでいる。<br><b>結果</b>：テストの読み上げが CABLE Input に鳴り、OBS の「CABLE Output」の音量メーターが動く。スピーカーからは聞こえない。</p>
+
+<ol class="steps">
+<li class="both">VB-Audio Virtual Cable を入れる<span class="you">（ドライバーの導入の許可は人）</span>。再生デバイスに「CABLE Input」、録音デバイスに「CABLE Output」が増える。</li>
+<li class="ai">VOICEVOX を入れ、話者を決める（話者 ID で指定する）。プログラムからエンジンが起動していなければ起動する。<span class="you">声を聞き比べて話者を選ぶところだけ人。</span></li>
+<li class="ai">読み上げの wav は「CABLE Input」へ鳴らす。OBS には「CABLE Output」を音声入力として足す。これで読み上げはスピーカーから出ずに配信にだけ乗る。</li>
+<li class="ai">ゲーム音は OBS のゲームキャプチャで直接拾う（アプリの音声キャプチャを別に足すと二重になる）。</li>
+</ol>
+<div class="note">スピーカーのデバイスをミュートしても、OBS はアプリから直接音を拾うので配信の音は消えません。アプリ個別のミュートは配信からも消えるので使いません。</div>
+<h3>読み上げの小技</h3>
+<ul>
+<li class="ai">長いコメントは 60 字ほどで切る。読み上げ待ちが溜まったら古いものから捨てる。</li>
+<li class="ai">英字のすぐ後に記号やかなが続くと VOICEVOX が読みを崩す（<code>gg!</code> が「グ」になる）。読み上げる文だけ、英字の後に空白を挟む。</li>
+<li class="ai">「!」が入ったコメントや「うおおお」だけ反響を掛ける、のように、コメントの中身で OBS のフィルターをオン・オフすると楽しい。反響を切るときは前の声の残響が消えるまで 2 秒ほど待つ。</li>
+<li class="ai">NG 語の一覧を用意し、当たったコメントは表示も読み上げもしない。一覧は一から作らず、web で公開されている日本語の不適切語のデータセットから適当なものを採用し、自分の配信に合わせて足し引きする（利用条件は採用する前に確かめる）。データセット探しと取り込みは AI セッションに頼める。</li>
+</ul>
+
+<h2 id="obs">7. OBS の準備</h2>
+<p class="pr"><b>前提</b>：4〜6 が済んでいる。<br><b>結果</b>：配信専用のプロファイルとシーンがあり、AI セッションから WebSocket に接続でき、ブラウザソースにオーバーレイが映る。</p>
+
+<p>AI は WebSocket 経由で OBS を操作するので、<span class="you"><b>先に 4 番目の WebSocket サーバーを人が有効にしておく</b></span>と、<span class="ai">残りの組み立ては AI に頼めます</span>。</p>
+<ol class="steps">
+<li class="both"><b>配信専用のプロファイル</b>を作る。配信先とキーはここに入れる<span class="you">（キーを貼るのは人）</span>。普段使いのプロファイル（Twitch など）とは分ける。</li>
+<li class="both">配信用のシーンを作り、ゲームキャプチャ、読み上げ（CABLE Output）、ブラウザソース（オーバーレイ）を入れる。<span class="you">ゲームキャプチャは人が OBS の画面で作り、ゲームの窓を選んで切り抜きを合わせる</span>（AI はこのソースの位置や切り抜きを変えない）。</li>
+<li class="ai">ブラウザソースは 1920x1080 で、URL は自分の PC で動かす表示サーバー（例：<code>http://127.0.0.1:8080/overlay.html</code>）。</li>
+<li class="you">「ツール」→「WebSocket サーバー設定」で「WebSocket サーバーを有効にする」に印を付ける。プログラムはここから OBS を操作する（起動の確認、プロファイルの検査、配信の開始と停止、スクリーンショットなど）。
+<br>同じ画面の「認証を有効にする」のパスワードは、<b>OBS を外から操作するための合言葉</b>。YouTube や Google のパスワードとは関係なく、OBS の中だけで使う。OBS が作った値をそのまま使えばよく、プログラムは OBS の設定ファイル（<code>%APPDATA%\obs-studio\plugin_config\obs-websocket\config.json</code>）から読めるので、どこかに書き写す必要もない。同じ PC やネットワークのほかのプログラムに勝手に配信を操作されないためのものなので、認証は切らない。</li>
+<li class="both">（任意）ゲーム音や読み上げに VST2 リバーブのフィルターを付ける。オン・オフはプログラムから切り替えられる。<span class="you">掛かり具合はプラグインの画面で聞きながら人が調整する。</span></li>
+</ol>
+<div class="note warn">OBS は <code>--profile</code> に存在しない名前を渡すと、黙って既定のプロファイルで起動します。配信を始める前に、いまのプロファイル名を obs-websocket で確かめ、違えば配信しないようにしてください。配信先を間違える事故を防げます。</div>
+
+<div class="part">作る（手順）</div>
+
+<h2 id="program">8. AI セッションで作る</h2>
+<p class="pr"><b>前提</b>：5〜7 が済んでいる（Google 側の準備と、WebSocket の有効化は人にしかできない）。<br><b>結果</b>：下の部品がそろい、全部の <code>--selfcheck</code> が通る。</p>
+<p>配信プログラムは AI セッションに作ってもらいます。<a href="stream-prompt.html" data-router-ignore>AI に渡すプロンプト</a>の「全体の依頼」を、【】を自分の値に書き換えてから渡し、AI が段階ごとに止まって報告するたびに中身を確かめて次へ進めます。作る部品は次のとおりです。</p>
+<table class="prog">
+<tr><th>部品</th><th>すること</th></tr>
+<tr><td>設定の読み込み</td><td>人が触るのは設定ファイル1つだけにする。読み込み時に必須の項目と型を確かめる</td></tr>
+<tr><td>予約枠の作成</td><td>次回の枠がなければ作る。タイトル・説明・タグ・サムネ（フォルダからランダム）・言語を入れる</td></tr>
+<tr><td>OBS の操作</td><td>起動、プロファイルとシーンの検査、配信開始と出力が本当に動いたかの確認、終了</td></tr>
+<tr><td>コメントの取得</td><td>pytchat で取り、NG 判定、YouTube のお知らせ（システムメッセージ）の除外</td></tr>
+<tr><td>読み上げ</td><td>VOICEVOX で合成し、仮想ケーブルへ順番に鳴らす</td></tr>
+<tr><td>オーバーレイ</td><td>ローカルの HTTP（HTML を配る）と WebSocket（コメントを送る）のサーバー。HTML 側でコメント欄、メモ、Tips と告知の流れる掲示板を描く</td></tr>
+<tr><td>チャプターと記録</td><td>配信中に OBS のスクリーンショットから試合の頭・キャラ・勝敗を読み、終了後に説明欄へチャプターを書き、CSV に残す（<a href="#chapter">13</a>）</td></tr>
+<tr><td>タスク登録</td><td>設定ファイルの開始・終了時刻から、タスク スケジューラのタスクを登録し直す</td></tr>
+</table>
+<p>どの部品にも <code>--selfcheck</code> のような「外につながずに中身だけ確かめる」入口を付けておくと、設定を変えたときに安心です。</p>
+
+<h2 id="lobby">9. ロビーを自動で立てる</h2>
+<p class="pr"><b>前提</b>：8 の AI セッションを始めている。キー列を実機で確かめてある。<br><b>結果</b>：<code>--dry</code> で手順が表示され、実行するとロビーが建って観戦に切り替わる。</p>
+
+<p>ゲームの画面は読み取らず、<b>毎回ゲームを起動し直して、決まったキー列を送る</b>だけにすると安定します。ロビーの設定は起動するたびに初期値に戻るので、いつも同じ手順で済みます。</p>
+<ol class="steps">
+<li class="ai">ゲームが動いていれば終了させ、Steam から起動する。</li>
+<li class="you">タイトル → オンラインプレイ → カスタムマッチ → ロビー作成、と進むキー列を、自分の環境で一度手で確かめて記録する。</li>
+<li class="ai">ロビー作成画面で変えたい項目（参加人数、パスワードなど）だけ操作する。パスワードは数字キーで直接打てる。</li>
+<li class="ai">ロビーが建ったら少し待ってから、観戦に切り替えるキー（左 Ctrl）を送る。</li>
+<li class="ai">最後にスクリーンショットを1枚残す。毎回同じファイルに上書きするログで、普段は見ない。ロビーが建っていなかったときに、どこで止まったかを調べるために使う。</li>
+</ol>
+<div class="note">キー入力は Python の <code>ctypes</code> から Windows の <code>SendInput</code> を、<b>スキャンコード方式</b>で送ると届きます。<code>SendKeys</code> のようなウィンドウメッセージ方式は届きません。仮想パッドや AutoHotkey は要りません。</div>
+
+<h2 id="settings">10. 設定ファイルの考え方</h2>
+<p class="pr"><b>前提</b>：8 の段階 1（設定の雛形）ができている。<br><b>結果</b>：自分の値（時刻、文言、デバイス名）が入り、<code>--selfcheck</code> が通る。</p>
+
+<p>TOML 1枚にまとめ、表ごとに分けます。</p>
+<pre><code>[screen]     画面のタイトル、参加案内、ロビーのキー操作、ルールのメモ
+[speech]     話者、速度、最大文字数、出力デバイス（CABLE Input）、反響の条件
+[youtube]    開始・終了時刻、公開設定、カテゴリ、タグ、説明文、サムネの置き場所
+[obs]        プロファイル名、シーン名、ミュートするか、反響を使うか
+[announce]   告知（日付付きの行はその日を過ぎたら自動で流さない）
+[tips]       画面下に流す豆知識（1行1件、# の行は読み飛ばす）
+[ng]         読み上げも表示もしない語</code></pre>
+<ul>
+<li>配信中に書き換えて機能するのはメモ・告知・Tips・NG 語だけにし、それ以外は次回から機能する、と決めておくと迷わない。</li>
+<li class="ai">書き換えたら selfcheck で TOML が壊れていないか確かめる。</li>
+<li class="ai">パス・ポート・デバイス名など PC ごとに違うものは、全部この設定ファイルに寄せる。</li>
+</ul>
+
+<h2 id="tasks">11. タスク スケジューラに載せる</h2>
+<p class="pr"><b>前提</b>：8〜10 が済んでいる。<br><b>結果</b>：5 つのタスクが登録され、登録内容と設定の差の表示が空になる。</p>
+
+<table>
+<tr><th>タスク</th><th>いつ</th><th>何を動かす</th></tr>
+<tr><td>予約枠</td><td>毎日 12:00</td><td>予約枠の作成（枠があれば何もしない）</td></tr>
+<tr><td>ミュート</td><td>開始 10 分前</td><td>スピーカーのミュート</td></tr>
+<tr><td>ロビー</td><td>開始 5 分前</td><td>ロビーの自動作成</td></tr>
+<tr><td>配信</td><td>開始</td><td>配信プログラム（終了時刻まで動き、後片付けまでする）</td></tr>
+<tr><td>片付け</td><td>終了 5 分後</td><td>ゲームを閉じる</td></tr>
+</table>
+<ul>
+<li class="ai">タスクは手で作らず、設定ファイルの時刻から登録し直すスクリプトを用意する。時刻を変えたらそれを流すだけにする。</li>
+<li class="ai">ゲームへのキー入力があるので、ログオン中のユーザーで動かす。</li>
+</ul>
+
+<div class="part">確かめる（手順）</div>
+
+<h2 id="test">12. テストの順番</h2>
+<p class="pr"><b>前提</b>：11 が済んでいる。<br><b>結果</b>：限定公開の 5 分の配信でコメントが画面に出て読み上げられ、終わった後に説明欄へチャプターが付く。本番の初回を見守り終える。</p>
+
+<ol class="steps">
+<li class="ai">selfcheck を全部通す。</li>
+<li class="ai">オフラインのコメントテスト：打った文を、本番と同じ NG 判定・読み上げ・オーバーレイに流す（YouTube にはつながない）。</li>
+<li class="both">OBS をつないで画面の見た目を確かめる（ブラウザソースを読み直して、スクリーンショットを撮る）。</li>
+<li class="both"><b>限定公開</b>で 5 分の予約枠を作り、5 分だけ本当に配信する。非公開の枠ではコメントが取れないので、限定公開にする。</li>
+<li class="both">ロビーの自動作成を単体で動かし、残したスクリーンショットで確かめる。</li>
+<li class="you">本番の時刻でタスクを動かす。最初の数回は近くで見守る。</li>
+</ol>
+
+<div class="part">仕組み（解説）</div>
+
+<h2 id="chapter">13. チャプターの取り方</h2>
+<p>配信のアーカイブに、試合ごとのチャプターを自動で付ける仕組みです。部品の中でいちばん手間がかかります。画面を読む判定は AI に作ってもらえますが、比べる見本の画像は、実際のゲーム画面から用意する必要があります。</p>
+<h3>試合の頭を見つける</h3>
+<ul>
+<li class="ai">試合の頭には、毎回「対戦を開始します」→ ロゴ → キャラ選択 → VS → READY の順に画面が出る。READY は各ラウンドの頭にも出るので使わず、残りの4つのどれかが写ったら試合の頭とみなす。</li>
+<li class="ai">配信中、OBS のゲーム画面のスクリーンショットを数秒おきに撮る。上下の黒帯を落として 1280x720 にそろえ、画面の決まった範囲を見本の画像と比べる。範囲は、毎回同じ絵になり、プレイヤー名やロビー ID が写らない所だけにする。</li>
+<li class="ai">比べるときは画像を縮小して、明るさの差の平均を見る。差がしきい値より小さければ一致とする。しきい値は、録画した配信で「一致する画面」と「一致しない画面」の差を測って決める。</li>
+<li class="ai">同じ試合を二重に数えないよう、一致する画面が 20 秒ほど途切れるまでは次を数えない。</li>
+</ul>
+<h3>キャラと勝敗を読む</h3>
+<ul>
+<li class="ai">キャラ名は、VS の画面などに出る名前の文字（黄〜橙の部分）を、キャラごとの見本と比べて読む。</li>
+<li class="ai">勝敗は、試合後の結果画面の見出し（RESULT CUSTOM MATCH）が出たときに読む。</li>
+<li class="ai">読めなかったところは「不明」と書く。チャプターの時刻さえ合っていれば、キャラが読めなくても役に立つ。</li>
+</ul>
+<h3>見本の画像を用意する</h3>
+<ul>
+<li class="both">配信のアーカイブ（録画）から、試合の頭の4つの画面、結果画面、各キャラの名前が出た画面のフレームを切り出す。切り出しと、見本の画像を作る道具は AI に作ってもらい、<span class="you">どの場面のフレームを使うかは人が選んで確かめる</span>。</li>
+<li class="ai">作った見本で、録画を最初から最後まで走査して、試合の頭を取りこぼしていないか、余計に数えていないかを確かめる。</li>
+</ul>
+<h3>説明欄に書く</h3>
+<ul>
+<li class="ai">時刻は、YouTube の開始時刻ではなく OBS が送り始めた時刻を基準にし、試合の頭の 2 秒手前を指す。</li>
+<li class="ai">1行は「時刻 [試合番号] 左キャラ,勝敗,右キャラ」の形にする（例：<code>55:51 [1] GA🐺,o-x,🐺GA</code>）。行頭の絵文字は YouTube に消されるので、左キャラの絵文字は名前の後ろに付ける。試合番号は CSV の記録と同じにする。</li>
+<li class="ai">YouTube のチャプターの決まり（14）に合わせる。101 行以上になる場合は、溢れた試合を 100 行目にまとめる。</li>
+<li class="ai">書いた後に視聴ページを見て、チャプターが出ていなければ一度外して付け直す。</li>
+</ul>
+
+<div class="part">参照</div>
+
+<h2 id="spec">14. YouTube の仕様と参照リンク</h2>
+<p>プログラムを作るときに前提になる YouTube 側の決まりです。公式の資料で確かめたものはリンクを、資料が見つからずこの環境で実際に起きたことは「この環境での観測」と書いています（2026 年 11 月時点）。</p>
+<table>
+<tr><th>仕様</th><th>根拠</th></tr>
+<tr><td>予約枠に自動開始・自動停止（<code>enableAutoStart</code> / <code>enableAutoStop</code>）を付けると、OBS が送り始めた時点で始まり、止めて約 1 分後に終わる。開始・終了の API（<code>transition</code>）は呼ばなくてよい</td><td><a href="https://developers.google.com/youtube/v3/live/docs/liveBroadcasts" target="_blank" rel="noopener">liveBroadcasts リソース</a></td></tr>
+<tr><td>同じストリームキーで自動開始の枠を2つ以上作るとエラーになる。<b>枠は常に1つ</b>にして、配信が終わったら次の回の枠を作る</td><td>この環境での観測</td></tr>
+<tr><td>予約枠（liveBroadcast）にはタグと言語の欄がない。作った後に <code>videos.update</code> で入れる</td><td><a href="https://developers.google.com/youtube/v3/live/docs/liveBroadcasts" target="_blank" rel="noopener">liveBroadcasts リソース</a></td></tr>
+<tr><td><code>videos.update</code> はタイトルとカテゴリが必須で、送らなかった欄は消える。タイトル・説明・カテゴリ・タグ・言語を毎回全部送る</td><td><a href="https://developers.google.com/youtube/v3/docs/videos/update" target="_blank" rel="noopener">Videos: update</a></td></tr>
+<tr><td>説明欄は 5000 バイトまで。<code>&lt;</code> と <code>&gt;</code> は使えない</td><td><a href="https://developers.google.com/youtube/v3/docs/videos" target="_blank" rel="noopener">Videos リソース</a></td></tr>
+<tr><td>チャプターは、最初の時刻が 0:00、3つ以上、昇順、各 10 秒以上</td><td><a href="https://support.google.com/youtube/answer/9884579" target="_blank" rel="noopener">YouTube ヘルプ：Video Chapters</a></td></tr>
+<tr><td>チャプターが 101 行以上だとプレーヤーに出ない。配信直後に書いたチャプターは出ないことがあり、中身を一度変えて戻すと出る</td><td>この環境での観測</td></tr>
+<tr><td>動画の詳細の「ゲームのタイトル」は API で設定できない。Studio で手で設定する（5-1 の 4）</td><td>この環境での観測</td></tr>
+<tr><td>API の枠（クォータ）は 1 日 10,000 ユニット（検索と動画のアップロードは別枠）。予約枠の作成は 50 程度なので、週 1 回なら余裕がある</td><td><a href="https://developers.google.com/youtube/v3/getting-started" target="_blank" rel="noopener">Getting Started（Quota usage）</a></td></tr>
+<tr><td>同意画面が「テスト」のままだと、更新用トークンが 7 日で失効する（5-5）</td><td><a href="https://developers.google.com/identity/protocols/oauth2" target="_blank" rel="noopener">Using OAuth 2.0 to Access Google APIs</a></td></tr>
+<tr><td>同意画面が「テスト」の間は、テストユーザーに入れたアカウント（100 人まで）しか許可できない</td><td><a href="https://support.google.com/cloud/answer/15549945" target="_blank" rel="noopener">Manage App Audience</a></td></tr>
+<tr><td>非公開の配信ではコメントが取れない。pytchat は接続した後のコメントしか取れない</td><td>この環境での観測</td></tr>
+</table>
+
+<h2 id="errors">15. よくあるエラー（YouTube と Google Cloud）</h2>
+<table>
+<tr><th>エラー</th><th>原因と対処</th></tr>
+<tr><td><code>invalid_grant</code></td><td>更新用トークンの失効。公開ステータスが「テスト」のままになっていないか確かめ、本番環境にしてから 5-6 をやり直す（<code>token.json</code> を消してから許可し直す）</td></tr>
+<tr><td><code>access_denied</code>（許可の画面で止まる）</td><td>テスト中のアプリに、テストユーザーに入っていないアカウントでログインした。5-3 の 7 で追加するか、本番環境にする</td></tr>
+<tr><td><code>redirect_uri_mismatch</code></td><td>OAuth クライアントの種類が「デスクトップ アプリ」ではない。5-4 で作り直す</td></tr><tr><td><code>liveStreamingNotEnabled</code></td><td>チャンネルのライブ配信がまだ有効になっていない。5-1 の 1 を済ませて待つ</td></tr>
+<tr><td><code>accessNotConfigured</code> / API が無効</td><td>プロジェクトで YouTube Data API v3 を有効にしていない、または別のプロジェクトの JSON を使っている。5-2 の 4 を確かめる</td></tr>
+<tr><td><code>quotaExceeded</code></td><td>1 日の枠（10,000）を使い切った。太平洋時間の深夜（日本時間の 16〜17 時）に戻る。週 1 回の運用ならまず起きないので、ループで呼び続けていないか見直す</td></tr>
+</table>
+
+<h2 id="traps">16. ハマりどころ</h2>
+<table>
+<tr><th>症状</th><th>対処</th></tr>
+<tr><td>OBS が配信開始の直後に落ちる</td><td>起動してから 30 秒ほど待ってから配信を始める</td></tr>
+<tr><td>OBS の起動時にセーフモードの確認が出て、無人の起動が止まる</td><td>前回 OBS が落ちると、次の起動でこの確認が出る。起動する前に <code>%APPDATA%\obs-studio\.sentinel</code> の中の <code>run_*</code> を消すと出ない</td></tr>
+<tr><td>配信開始が成功と返るのに出力が動いていない</td><td>開始後に出力が動いているかを数秒おきに確かめ、20 秒ほど待つ</td></tr>
+<tr><td>シーンの変更が消える</td><td>OBS は終了時にしか保存しない。変更したら保存の操作も送る</td></tr>
+<tr><td>読み上げだけが消える</td><td>セキュリティソフトがマイク扱いの音声入力（CABLE Output）を止めることがある。許可の設定を確かめる</td></tr>
+<tr><td>オーバーレイの画像が途中までしか表示されない</td><td>セキュリティソフトが、自分の PC の中の HTTP の通信を一定の大きさ（この環境では 64KB）で止めることがある。表示サーバーが配るファイル（画像など）は、1 ファイル 64KB 未満に収める。大きい画像は縮小するか、軽い形式（JPEG など）で保存し直す</td></tr>
+<tr><td>掲示板の Tips・告知の読み込みがたまに失敗する</td><td>オーバーレイは書き換えを拾うため、告知は 1 件流すたびに、Tips は一巡するたびに、設定ファイルの中身を表示サーバー経由で読み直す。この読み込みが、PC の中の通信でも数 % 失敗することがある（150 回中 4 回の例）。失敗したときは前に読めた内容で流し続ける作りにする。コメントは別の経路（WebSocket）で届くので関係ない</td></tr>
+<tr><td>コメントが取れない</td><td>pytchat は接続した後のコメントしか取れない。非公開の配信では取れない</td></tr>
+<tr><td>チャプターがプレーヤーに出ない</td><td>101 行以上だと出ない（100 行まで）。書いた直後に出ないこともあるので、少し待って視聴ページを確かめ、出ていなければ付け直す</td></tr>
+<tr><td>チャプターの時刻がずれる</td><td>YouTube の開始時刻は OBS が送り始めた時刻より数秒遅い。OBS の送信開始を基準にする</td></tr>
+<tr><td>ロビーのキーを取りこぼす</td><td>画面の切り替わりの後は数秒待ってから次のキーを送る</td></tr>
+</table>
+
+<h2 id="disclaimer">免責</h2>
+<ul>
+<li>このページは、個人の PC で動かしている配信の仕組みをもとにした非公式の資料です。カプコン、Google（YouTube）、OBS Project、VOICEVOX、VB-Audio、Valve（Steam）などの各社・各団体とは関係ありません。</li>
+<li>内容の正確さや、書いたとおりに動くことは保証しません。手順やプロンプトを使って生じた損害（配信の事故、アカウントの制限、データの消失など）について、作成者は責任を負いません。自分の判断と責任で使ってください。</li>
+<li>各サービスの仕様や画面は変わることがあります。内容は 2026 年 11 月時点のものです。</li>
+<li>AI が作ったコードは、中身を確かめてから実行してください。</li>
+<li>YouTube やゲームの利用規約、配信のガイドラインは、各自で確かめて守ってください。</li>
+</ul>
+</main>
+</body>
+</html>

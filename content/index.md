@@ -44,3 +44,5 @@ modified: 2026-10-08
 
 [YouTube チャンネル](https://www.youtube.com/@ccomoro1411/streams)
 <a href="https://vs-memo.github.io/static/stats.html" data-router-ignore>対戦ダイアグラム</a>
+<a href="https://vs-memo.github.io/static/stream-guide.html" data-router-ignore>無人配信ハンズオン</a>
+<a href="https://vs-memo.github.io/static/stream-prompt.html" data-router-ignore>AI に渡すプロンプト</a>

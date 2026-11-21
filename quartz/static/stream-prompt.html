@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI に渡すプロンプト</title>
+<style>
+:root { --bg: #ececec; --card: #fff; --text: #111; --muted: #555; --line: #9a9a9a; --accent: #000; --code: #e2e2e2; }
+* { box-sizing: border-box; }
+body { font-family: "BIZ UDPGothic", "Noto Sans JP", sans-serif; margin: 0; color: var(--text); background: var(--bg); line-height: 1.75; }
+main { max-width: 1440px; margin: 0 auto; padding: 20px 28px 64px; }
+@media (max-width: 600px) { main { padding: 16px 16px 48px; } }
+h1 { font-size: 26px; margin: 0 0 4px; }
+h2 { font-size: 21px; margin: 40px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #000; }
+p.lead { color: var(--muted); margin: 0 0 16px; }
+ol, ul { padding-left: 22px; }
+.box { position: relative; margin: 10px 0 18px; }
+.box pre { background: var(--code); border: 2px solid var(--line); padding: 12px; padding-top: 40px; white-space: pre-wrap; word-break: break-word; font-family: "IBM Plex Mono", Consolas, monospace; font-size: 14px; line-height: 1.6; margin: 0; max-height: 520px; overflow-y: auto; }
+.box button { position: absolute; top: 8px; right: 8px; font: inherit; font-size: 14px; padding: 2px 12px; cursor: pointer; background: var(--card); color: var(--text); border: 2px solid var(--line); border-radius: 6px; }
+.note { background: var(--card); border-left: 4px solid var(--accent); padding: 8px 12px; margin: 10px 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>AI に渡すプロンプト</h1>
+<p class="lead">コーディング用の AI（PC のファイルを読み書きしてコマンドを動かせるもの）に、無人配信の仕組みを作らせるための文面です。手順の解説は <a href="stream-guide.html" data-router-ignore>無人配信ハンズオン</a> にあります。</p>
+
+<h2>使い方</h2>
+<ol>
+<li>作業用のフォルダを決め、AI をそこで起動する。</li>
+<li>下の「全体の依頼」をコピーし、<code>【】</code> の部分を自分の値に書き換えてから渡す。「例」と書いた所は、その値でよければそのままでよい。</li>
+<li>AI は段階ごとに作って止まるので、確かめてから次へ進ませる。詰まったら「部品ごとの依頼」を使う。</li>
+</ol>
+<div class="note">秘密情報（<code>client_secrets.json</code>、<code>token.json</code>、ストリームキー、obs-websocket のパスワード）は AI に貼らないでください。プロンプトにも「中身を読まない・出力しない」と書いてあります。</div>
+
+<h2>全体の依頼</h2>
+<div class="box"><button type="button" data-copy="p-main">コピー</button><pre id="p-main">Windows の PC で、ヴァンパイアセイヴァー（Steam版 カプコン ファイティング コレクション）の対戦部屋を自動で立て、YouTube Live に無人で配信する仕組みを、このフォルダに Python で作ってください。
+
+# 目的
+毎週【曜日と時刻（例：日曜 6:30〜11:00）】に、人がいなくても次が順に起きること。それぞれ Windows のタスク スケジューラの別のタスクとして動く。
+1. 毎日 12:00：次回の配信の予約枠を YouTube に作る（次回の枠がもうあれば何もしない）
+2. 開始10分前：スピーカーをミュートする（配信の音は消さない）
+3. 開始5分前：ゲームを再起動し、決まったキー列でパスワード付きのカスタムマッチのロビーを作り、観戦に回る
+4. 開始：VOICEVOX とオーバーレイ（ゲーム画面に重ねるコメント欄や掲示板）のサーバーを起動 → OBS を起動して検査 → 配信開始 → コメントを画面に出して読み上げ、試合の画面を記録する
+5. 終了：配信停止 → OBS 終了 → ミュートを戻す → 説明欄に試合ごとのチャプターを書き、試合の記録を CSV に残す
+6. 終了5分後：ゲームを閉じる（ロビーも消える）
+
+# 環境（【】は自分の値に書き換える）
+- Windows 11、Python 3.13 以上の venv（使う版：【例 3.14】）
+- PC は配信の時刻に起きていて、画面がロックされていない（スリープしない設定、ノート PC なら電源につなぐ）
+- OBS Studio（obs-websocket 有効、認証あり。ポートとパスワードは %APPDATA%\obs-studio\plugin_config\obs-websocket\config.json から読み、値は表示しない）。配信専用のプロファイル名は【プロファイル名】、シーン名は【シーン名】、ゲームキャプチャのソース名は【ソース名】。ストリームキーは人がプロファイルに入れてある
+- VOICEVOX（エンジンは http://127.0.0.1:50021）、話者 ID は【番号】
+- VB-Audio Virtual Cable（読み上げは「CABLE Input」へ鳴らし、OBS は「CABLE Output」を音声入力にする）
+- YouTube のチャンネル URL は【例 https://www.youtube.com/@xxxx】
+- YouTube Data API v3 の OAuth クライアント（デスクトップ）の JSON は【client_secrets.json の場所】にある。同意画面の公開ステータスは人が「本番環境」にしてあり、スコープは https://www.googleapis.com/auth/youtube と https://www.googleapis.com/auth/youtube.force-ssl の2つ
+- 予約枠に結び付けるストリームキーの名前は【例 Default stream key】
+- ゲームは Steam から起動する。Steam の AppID は【番号（ストアページの URL の /app/ の後ろの数字）】、実行ファイルは【パス（Steam のライブラリでゲームを右クリック →「管理」→「ローカルファイルを閲覧」で開くフォルダの exe）】（終了させるときにプロセスを見分けるのに使う）
+
+# settings.toml に置く項目（段階1で必須キーとして作る。文言は空のまま作り、私が書くまで先へ進まない）
+- [screen]：画面に出すタイトル（配信のタイトルとは別。日付を入れられる）、参加案内、ロビーのキー操作の説明、ルールのメモ
+- [speech]：話者 ID、速度、最大文字数、出力デバイス名（CABLE Input）
+- [youtube]：チャンネル URL、配信の曜日・開始時刻・終了時刻、予約枠を作る時刻（毎日 12:00）、配信のタイトル（例 ニチアサセイヴァー_{yymmdd}、{yymmdd} は配信日）、説明文、公開設定（public / unlisted）、カテゴリ（ゲーム = 20）、音声の言語（ja）、タグ、サムネのフォルダ（jpg/png から毎回1枚をランダムに選ぶ）、ストリームキーの名前
+- [obs]：プロファイル名、シーン名、ゲームキャプチャのソース名、ミュートするか、オーバーレイの HTTP と WebSocket のポート
+- [announce]：告知（1行1件。行頭に日付があればその日を過ぎた行は流さず、配信開始時にファイルから消す）、Tips 何件ごとに流すか、1回に何件流すか
+- [tips]：画面下に流す豆知識（1行1件、# の行と空行は読み飛ばす）
+- [ng]：読み上げも表示もしない語（1行1件）
+
+# 守ること
+- 秘密情報（client_secrets.json、token.json、ストリームキー、obs-websocket のパスワード）の中身は読まない・ログやコメントや出力に書かない。存在と場所だけ扱う（プログラムが実行時に読むのはよい）。
+- ロビーのパスワードは、ログ、--dry の表示、オーバーレイに出さない。
+- 人が触る設定は settings.toml にまとめる。パス・ポート・デバイス名・時刻・文言はコードに直書きしない。
+- 依存は必要最小限にする（候補：pytchat、google-auth-oauthlib、requests、websockets、sounddevice、numpy、pillow、pycaw、comtypes、psutil、yt-dlp）。
+- pytchat は PyPI 版ではなく KaitoCross のフォークを commit で固定して入れる（pip install "pytchat @ git+https://github.com/KaitoCross/pytchat@8973e0bbade2ad2ab5c26b6d88bedf3101deabb5"）。PyPI 版でコメントが取れるかは確かめていない。
+- 各モジュールに --selfcheck を付け、外部につながずに中身を確かめられるようにする（ゲームにキーを送ったり、YouTube や OBS を変えたりしない）。
+- 外に影響する操作は、私が許可してから行う：配信する、予約枠を作る・変える、説明欄を書き換える、タスクを登録する、ゲームにキーを送る、OBS のシーンを変更して保存する。
+- 段階は番号の順に進める（後の段階は前の段階の部品を使う）。段階ごとに作って止まり、何を作り、何を確かめ、何が未確認かを報告する。
+
+# 段階
+1. 設定：上の項目で settings.toml の雛形を作り、読み込みで必須キーと型を検査する。
+2. オーバーレイ：ローカルの HTTP（HTML とデータを配る）と WebSocket（コメントを送る）のサーバー、1920x1080 の overlay.html（右上にコメント欄、左下に参加案内とロビーのキー操作、右下にルールのメモ、ゲーム画面の下に横に流れる掲示板）。
+   - 掲示板は Tips を1件ずつランダムに流し、Tips N 件ごとに告知を流す。告知は1件流すたびに、Tips は一巡するたびに、サーバーから読み直す（書き換えを途中から反映するため）。読めなかったときは前に読めた内容で流し続ける。
+   - 告知は {赤}〜{/} のような札で、色・虹色・光・点滅・大きさを付けられるようにする（札の一覧は settings.toml の説明に書く）。絵文字は元の色のまま表示する。
+   - サーバーが配る画像などは1ファイル 64KB 未満にする（HTML は除く）。
+   - ブラウザで見て確かめる。
+3. 読み上げ：VOICEVOX が動いていなければ起動し、合成して仮想ケーブルへ順番に鳴らすキュー。出力デバイスが見つからないときは既定の再生デバイスに落とす（無音になるより鳴る方がよいという判断）。長文は切る、溜まったら古いものを捨てる、絵文字は読まない、英字の直後に記号やかなが続くときは空白を挟む（gg! が「グ」と読まれるため）。
+4. コメント：pytchat で取得する。NG 語は部分一致で、大文字小文字と全角半角を無視して判定し、当たったら表示も読み上げもしない。YouTube のシステムメッセージ（チャットの案内など）はチャット本文でない種別として捨て、判定に使った pytchat の属性名を報告する。NG 語の初期の一覧は、web で公開されている日本語の不適切語のデータセットから適当なものを選んで取り込む（候補と利用条件を示して、私が選んでから取り込む）。段階2・3を使って、YouTube につながずに文を流せるテスト用スクリプトも作る。
+5. ミュート：pycaw で既定の再生デバイス（スピーカー）をミュートし、ミュート前の状態をファイルに書く。終了時はそのファイルを読んで戻す。ファイルがなければ何も変えない。配信中に人がミュートを外していたら、そのままにする。アプリ個別のミュートは配信からも音が消えるので使わない。
+6. OBS の組み立て：setup_obs.py。OBS を起動し、obs-websocket で配信用のシーンに読み上げ（CABLE Output の音声入力）とオーバーレイ（ブラウザソース 1920x1080、URL は段階2のサーバー）を入れて保存する。配信は始めない。何度実行しても同じ状態になるようにする。ゲームキャプチャは人が手で作ったものを使い、切り抜きや位置は変えない（なければ作り方を案内する）。
+7. OBS の操作：起動、プロファイル名の検査（違えば配信しない。存在しない --profile は黙って既定で起動するため）、シーンの切り替え、配信開始と出力が本当に動いたかの確認（GetStreamStatus の outputActive を最大20秒見る）、停止、終了、保存、ブラウザソースの読み直し、ゲームキャプチャのスクリーンショット。
+8. YouTube：
+   - OAuth：初回だけブラウザで許可（--auth）、以後は token.json。予約枠の一覧を見るだけの入口（--show）も作る。--auth の前に、同意画面が本番環境でスコープが2つ付いているかを私に確かめる。
+   - 予約枠の作成：liveBroadcasts.insert で、title、description、scheduledStartTime、scheduledEndTime、privacyStatus、enableAutoStart と enableAutoStop（true）を付け、名前で指定したストリームキーに bind する。作った後に videos.update で categoryId、tags、defaultLanguage、defaultAudioLanguage を入れる。サムネは thumbnails.set。
+   - 枠は常に1つ（同じキーで自動開始の枠を複数作るとエラー）。次回の配信日の枠で、まだ始まっていないもの（lifeCycleStatus が ready など）があれば何もしない。終わった枠は数えない。配信日の終了時刻を過ぎていたら、その次の週の枠を作る。
+   - 説明欄などの更新は videos.update で行い、省略した欄は消えるので、title、description、categoryId、tags、defaultLanguage、defaultAudioLanguage を毎回全部送る。
+   - liveBroadcasts.transition は呼ばない（開始と終了は自動開始・自動停止に任せる）。
+9. 動画 ID：配信が始まったら、liveBroadcasts.list で自分のチャンネルの今ライブ中の枠を探して動画 ID を取る。取れなければチャンネル URL の /live を yt-dlp で解く。どちらも数十秒おきに数分まで待つ。
+10. チャプター：
+    - 見本画像：先に、必要な場面（試合開始の画面、各キャラが映った画面、勝敗の表示など）と枚数の一覧を私に示す。次に、今のゲーム画面を指定の名前で保存する小さなスクリプトを作り、私がゲームを動かしながら該当の場面で実行して chapter_templates に集める。集まるまで判定のしきい値は決めない。
+    - 判定：配信中、数秒おきにゲームキャプチャのスクリーンショットを撮り、画面の決まった位置を見本画像と比べて、試合の頭・使用キャラ・勝敗を読み取る。
+    - 書き込み：配信後、説明欄の末尾に「チャプター」の見出しを付けて書く。時刻は OBS が送り始めた時刻を基準に、試合の頭の2秒手前を指す。先頭行は 0:00、時刻は昇順、各章は10秒以上、1時間を超えたら H:MM:SS。章が3つ未満なら書かない。100行まで（溢れた試合は100行目にまとめる）。説明欄全体を5000バイト以内に収め、入りきらない試合は CSV だけに残す。
+    - 確認：書いた後に視聴ページを確かめ、チャプターが出ていなければ一度外して付け直す（5分おきに最大6回）。
+    - 試合の記録を CSV にも残す。
+11. ロビー：create_lobby.py。
+    - 動いていればゲームのプロセスを終了させ、Steam から steam://rungameid/【AppID】 で起動する。
+    - ゲームの窓を前面にしてから、ctypes の SendInput（スキャンコード方式。矢印などの拡張キーには KEYEVENTF_EXTENDEDKEY を付ける）で固定キー列を送ってロビーを作り、観戦に切り替える。窓を前面にできなければキーを送らずに止まる。
+    - 最後にスクリーンショットを残す（毎回同じファイルに上書きする、失敗したときの調査用のログ）。成否は自動判定しない。
+    - --dry でキーを送らずに手順だけ表示し（パスワードは伏せる）、--close でゲームを閉じる。キー列と待ち時間は設定に置き、キー列は私が実機で確かめて渡す。
+12. 進行：stream.py。
+    - 通常の起動：開始時刻に目的4を行う。OBS は起動後30秒待ってから配信を始める。出力が動いたら段階9で動画 ID を取ってコメントの取得を始め、配信中は段階10の撮影を続ける。終了時刻に目的5を行い、チャプターの確認が終わるまで終了しない。
+    - --mute：ミュートだけ行って終わる（目的2のタスク用）。
+    - --minutes N：N 分後に目的5に入る試験用。限定公開の枠で使う。
+    - ロビーの作成と終了は create_lobby.py が別のタスクで行うので、stream.py からは呼ばない。
+    - ログをファイルに残す。
+13. タスク：tasks.py。settings.toml の時刻から、Windows のタスク スケジューラに5つのタスクを登録し直す（差分の表示と --apply）。
+    - 予約枠：毎日 12:00。ほかの4つ（ミュート、ロビー、配信、ロビーを閉じる）は配信の曜日だけ、開始10分前・5分前・開始・終了5分後。
+    - このフォルダの venv の python.exe を、作業ディレクトリをこのフォルダにして登録する。
+    - ゲームにキーを送るので、ログオン中のユーザーとして対話的に実行する（ログオンしていなくても実行する、にはしない）。バッテリーでも止めない。スリープからは起こさない。
+    - 登録は PowerShell の Register-ScheduledTask で行い、スクリプトは -EncodedCommand で渡す（複数行を標準入力で渡すと1行ずつ実行されて壊れる）。
+
+# 既知の罠
+- OBS は配信開始の直後に落ちることがあるので、起動後30秒待ってから配信を始める。落ちた次の起動のセーフモード確認は、起動前に %APPDATA%\obs-studio\.sentinel の run_* を消すと出ない。
+- OBS はシーンの変更を終了時にしか保存しない。
+- pytchat は接続後のコメントしか取れず、非公開の配信では取れない。テストは限定公開で。
+- チャプターは101行以上だとプレーヤーに出ない。配信直後に書いたチャプターはプレーヤーに出ないことがあり、中身を一度変えて戻すと出る。
+- YouTube の actualStartTime は OBS が送り始めた時刻より数秒遅い。
+- スピーカーのデバイスミュートは配信の音に影響しない。アプリ個別のミュートは配信からも消える。
+- セキュリティソフトが PC の中の HTTP の通信を 64KB で止めたり、数 % 失敗させたりすることがある。マイク扱いの音声入力（CABLE Output）を止めることもある。
+- OAuth の同意画面が「テスト」のままだと、token.json の更新用トークンが7日で失効して invalid_grant になる。
+- 動画の詳細の「ゲームのタイトル」は API で設定できない。予約枠を作ったら、Studio で手で設定するよう私に伝える。
+
+まず段階1から始めてください。</pre></div>
+
+<h2>部品ごとの依頼</h2>
+<p>全体の依頼の途中で詰まったときや、一部だけ作りたいときに使います。</p>
+
+<h3>オーバーレイだけ</h3>
+<div class="box"><button type="button" data-copy="p-overlay">コピー</button><pre id="p-overlay">OBS のブラウザソース（1920x1080）で表示するオーバーレイ（ゲーム画面に重ねるコメント欄や掲示板）を作ってください。
+
+- Python の標準ライブラリと websockets で、ローカルの HTTP サーバー（overlay.html とデータを配る）と WebSocket サーバー（コメントを送る）を立てる。ポートは settings.toml で決める。
+- overlay.html は1ファイル。右上にコメント欄（新しいものが下に追加され、古いものは消える。名前は本文の上に小さく出す）、左下に参加案内とロビーのキー操作、右下にルールのメモ、ゲーム画面の下に横に流れる掲示板。ロビーのパスワードは画面に出さない。
+- 掲示板は Tips（1行1件をランダムに1件ずつ）を流し、Tips N 件ごとに告知を流す。告知は1件流すたびに、Tips は一巡するたびに settings.toml の内容をサーバーから読み直す。読めなかったときは前に読めた内容で流し続ける。
+- 告知の行頭に日付があれば、その日を過ぎた行は流さない。
+- 告知は {赤}〜{/} のような札で色・虹色・光・点滅・大きさを付けられるようにする（札の一覧は settings.toml の説明に書く）。絵文字は元の色のまま表示する。
+- 背景が明るい画面でも読めるよう、文字には縁取りか影を付ける。
+- サーバーが配る画像などは1ファイル 64KB 未満に収める（HTML は除く。セキュリティソフトが、PC の中の HTTP の通信を 64KB で止めた例がある）。
+- ブラウザで開いて見た目を確かめる。
+- 秘密情報（client_secrets.json、token.json、ストリームキー、obs-websocket のパスワード）の中身は読まない・ログや出力に書かない（プログラムが実行時に読むのはよい）。
+- 外に影響する操作（配信、予約枠や説明欄の変更、ゲームへのキー送信、OBS のシーンの変更と保存）は、私が許可してから行う。
+- 作り終えたら、何を作り、何を確かめ、何が未確認かを報告する。</pre></div>
+
+<h3>ロビーの自動作成だけ</h3>
+<div class="box"><button type="button" data-copy="p-lobby">コピー</button><pre id="p-lobby">カプコン ファイティング コレクション（Steam版）でヴァンパイアセイヴァーのカスタムマッチのロビーを自動で作る Python スクリプト create_lobby.py を作ってください。
+
+- ゲームは Steam から steam://rungameid/【AppID】 で起動する。実行ファイルは【パス】で、動いているプロセスを見分けて終了させるのに使う。
+- 標準ライブラリだけで書く。キー入力は ctypes から Windows の SendInput をスキャンコード方式で送る（SendKeys のようなウィンドウメッセージ方式は届かない）。矢印などの拡張キーには KEYEVENTF_EXTENDEDKEY を付ける。
+- 毎回、ゲームが動いていれば終了させてから起動し直す（ロビーの設定は起動ごとに初期値へ戻るので、固定のキー列で済む）。
+- キーを送る前にゲームの窓を前面にする。前面にできなければキーを送らずに止まる。
+- キー列と待ち時間は設定ファイルに置く。最初の版のキー列は【実機で確かめたキー列】。
+- ロビーが建ったら数秒待ってから、観戦に切り替えるキー（左 Ctrl）を送る。
+- 最後にスクリーンショットを shots/last.png に残す。毎回上書きするログで、普段は見ず、失敗したときの調査に使う。成否は自動判定しない。
+- --dry でキーを送らずに手順だけ表示し、--close でゲームを閉じる。ロビーのパスワードはログと --dry の表示に出さない。
+- --selfcheck はキーを送らない。
+- 秘密情報（client_secrets.json、token.json、ストリームキー、obs-websocket のパスワード）の中身は読まない・ログや出力に書かない（プログラムが実行時に読むのはよい）。
+- 外に影響する操作（配信、予約枠や説明欄の変更、ゲームへのキー送信、OBS のシーンの変更と保存）は、私が許可してから行う。
+- 作り終えたら、何を作り、何を確かめ、何が未確認かを報告する。</pre></div>
+
+<h3>コメントの取得と読み上げだけ</h3>
+<div class="box"><button type="button" data-copy="p-speech">コピー</button><pre id="p-speech">YouTube Live のコメントを取って VOICEVOX で読み上げる部品を作ってください。
+
+- コメントは pytchat で取る。PyPI 版ではなく KaitoCross のフォークを commit で固定して入れる（pip install "pytchat @ git+https://github.com/KaitoCross/pytchat@8973e0bbade2ad2ab5c26b6d88bedf3101deabb5"。PyPI 版で取れるかは確かめていない）。
+- 動画 ID は引数で渡すか、YouTube Data API の liveBroadcasts.list で自分のチャンネルの今ライブ中の枠を探す。API が使えなければチャンネル URL（【URL】）の /live を yt-dlp で解く。
+- YouTube のシステムメッセージ（チャットの案内など）はチャット本文でない種別として捨て、判定に使った pytchat の属性名を報告する。
+- NG 語（settings.toml の一覧、部分一致、大文字小文字と全角半角を無視）に当たったものは表示も読み上げもしない。初期の一覧は web で公開されている日本語の不適切語のデータセットから適当なものを採用する（候補と利用条件を示して、私が選んでから取り込む）。
+- 読み上げは VOICEVOX のエンジン（http://127.0.0.1:50021）で合成し、sounddevice で settings.toml の device_name（例：CABLE Input）へ鳴らす。見つからなければ既定の再生デバイスに落とす（無音になるより鳴る方がよいという判断）。
+- キューで1件ずつ読む。長文は max_chars で切り、待ちが溜まったら古いものから捨てる。
+- 絵文字は読まない。英字の直後に記号やかなが続くときは空白を挟む（gg! が「グ」と読まれるため）。
+- （任意）「!」を含むコメントだけ OBS の読み上げソースの反響フィルターをオンにして読む。フィルター名と、切る前に残響が消えるのを待つ秒数は settings.toml に置く。
+- YouTube につながずに文を流せる comment_test.py も作る。
+- 秘密情報（client_secrets.json、token.json、ストリームキー、obs-websocket のパスワード）の中身は読まない・ログや出力に書かない（プログラムが実行時に読むのはよい）。
+- 外に影響する操作（配信、予約枠や説明欄の変更、ゲームへのキー送信、OBS のシーンの変更と保存）は、私が許可してから行う。
+- 作り終えたら、何を作り、何を確かめ、何が未確認かを報告する。</pre></div>
+
+<h3>チャプターだけ</h3>
+<div class="box"><button type="button" data-copy="p-chapter">コピー</button><pre id="p-chapter">配信のアーカイブの説明欄に、試合ごとのチャプターを自動で書く仕組みを作ってください。
+
+- 見本画像：先に、必要な場面（試合開始の画面、各キャラが映った画面、勝敗の表示など）と枚数の一覧を私に示す。次に、今のゲーム画面を指定の名前で保存する小さなスクリプトを作り、私がゲームを動かしながら該当の場面で実行して chapter_templates に集める。集まるまで判定のしきい値は決めない。
+- 判定：配信中、obs-websocket の GetSourceScreenshot で数秒おきにゲーム画面を撮り、画面の決まった位置の色や形を見本と pillow で比べて、試合の頭・使用キャラ・勝敗を読み取る。
+- 時刻の基準は OBS が送り始めた時刻（YouTube の actualStartTime は数秒遅い）。試合の頭の2秒手前を指す。
+- 配信終了後、YouTube Data API の videos.update で説明欄の末尾に「チャプター」の見出しを付けて書く。省略した欄は消えるので、title、description、categoryId、tags、defaultLanguage、defaultAudioLanguage を毎回全部送る。
+- 書式：先頭行は 0:00、時刻は昇順、各章は10秒以上、1時間を超えたら H:MM:SS。章が3つ未満なら書かない。100行まで（101行以上だとプレーヤーに出ない。溢れた試合は100行目にまとめる）。説明欄全体を5000バイト以内に収め、入りきらない試合は CSV だけに残す。
+- 書いた後に視聴ページを確かめ、チャプターが出ていなければ一度外して付け直す（5分おきに最大6回）。配信直後に書いたチャプターはプレーヤーに出ないことがあり、中身を一度変えて戻すと出る。
+- 試合の記録を CSV にも残す。
+- 秘密情報（client_secrets.json、token.json、ストリームキー、obs-websocket のパスワード）の中身は読まない・ログや出力に書かない（プログラムが実行時に読むのはよい）。
+- 外に影響する操作（配信、予約枠や説明欄の変更、ゲームへのキー送信、OBS のシーンの変更と保存）は、私が許可してから行う。
+- 作り終えたら、何を作り、何を確かめ、何が未確認かを報告する。</pre></div>
+<h2 id="disclaimer">免責</h2>
+<ul>
+<li>このページは、個人の PC で動かしている配信の仕組みをもとにした非公式の資料です。カプコン、Google（YouTube）、OBS Project、VOICEVOX、VB-Audio、Valve（Steam）などの各社・各団体とは関係ありません。</li>
+<li>内容の正確さや、書いたとおりに動くことは保証しません。手順やプロンプトを使って生じた損害（配信の事故、アカウントの制限、データの消失など）について、作成者は責任を負いません。自分の判断と責任で使ってください。</li>
+<li>各サービスの仕様や画面は変わることがあります。内容は 2026 年 11 月時点のものです。</li>
+<li>AI が作ったコードは、中身を確かめてから実行してください。</li>
+<li>YouTube やゲームの利用規約、配信のガイドラインは、各自で確かめて守ってください。</li>
+</ul>
+</main>
+<script>
+document.querySelectorAll("button[data-copy]").forEach(function (b) {
+  b.addEventListener("click", function () {
+    var t = document.getElementById(b.dataset.copy).textContent;
+    var done = function () { b.textContent = "コピーしました"; setTimeout(function () { b.textContent = "コピー"; }, 1500); };
+    if (navigator.clipboard) { navigator.clipboard.writeText(t).then(done, function () { b.textContent = "コピーできません"; }); }
+    else { b.textContent = "コピーできません"; }
+  });
+});
+</script>
+</body>
+</html>
